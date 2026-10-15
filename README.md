@@ -33,6 +33,12 @@ The current code covers formation records, VNB handovers, participant changes, s
 | Municipality | `/gemeinde/dashboard` | Open the municipality dashboard. |
 | Developer or self-hoster | `/api/v1/docs` | Use the API or run your own instance. |
 
+Verified owners can keep private solar equipment records and a checklist for
+their model at `/dashboard/equipment`, without LEG membership or telemetry.
+Cloud-access reviews and backup evidence remain separate. Owners can download a
+redacted installer handoff. OpenLEG does not verify the entered claims or change
+devices.
+
 Municipality profiles, the directory, and the municipality dashboard distinguish
 zero confirmed expressions of interest from temporarily unavailable counts. When
 counts cannot be loaded, interest sorting falls back to sorting by name. Public
@@ -148,6 +154,12 @@ Der aktuelle Code deckt Gründungsunterlagen, VNB-Übergaben, Teilnehmeränderun
 | LEG-Betreiber | `/leg/dashboard` | Mitglieder, Verträge, Messung und Abrechnung verwalten. |
 | Gemeinde | `/gemeinde/dashboard` | Gemeinde-Dashboard öffnen. |
 | Entwickler oder Selbsthoster | `/api/v1/docs` | API nutzen oder eigene Instanz betreiben. |
+
+Bestätigte Eigentümer erfassen unter `/dashboard/equipment` private Solargeräte
+und eine Checkliste für ihr Modell, auch ohne LEG-Mitgliedschaft oder Telemetrie.
+Cloud-Zugriffe und Ersatzstromnachweise bleiben getrennt. Eigentümer können eine
+bereinigte Übergabe für den Installateur herunterladen. OpenLEG prüft die Angaben
+nicht und verändert keine Geräte.
 
 Gemeindeprofile, Verzeichnis und Gemeinde-Dashboard unterscheiden null bestätigte
 Interessenmeldungen von vorübergehend nicht verfügbaren Zahlen. Können die Zahlen

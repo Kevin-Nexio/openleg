@@ -92,6 +92,8 @@ also_copy = [
     "document_generator.py",
     "email_automation.py",
     "email_utils.py",
+    "equipment.py",
+    "equipment_routes.py",
     "formation_documents.py",
     "formation_guide.py",
     "formation_wizard.py",
