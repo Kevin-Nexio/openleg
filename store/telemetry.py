@@ -6,7 +6,7 @@ import hmac
 import secrets
 import uuid
 from contextlib import contextmanager
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from psycopg2.extras import Json
 
@@ -231,7 +231,7 @@ def ingest(community, installation, token, payload):
         row = _installation(cur, community, installation)
         # Recheck under the write lock: revocation may race with payload parsing.
         _authenticate(row, token)
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         samples = contract.observations(payload, row, now)
         accepted = duplicates = 0
         highwater = row["highwater"]
@@ -349,7 +349,7 @@ def read(community, installation, actor, *, aggregates=False, after=0):
         """,
             (installation, after),
         )
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         samples = [
             {
                 **r["observation"],

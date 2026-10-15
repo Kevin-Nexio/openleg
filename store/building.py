@@ -7,7 +7,7 @@ Owns building records, consent-gated building reads, and dashboard building data
 import json
 import logging
 import time
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 logger = logging.getLogger(__name__)
 
@@ -108,7 +108,7 @@ def save_building(
                     profile.get("potential_pv_kwp"),
                     time.time(),
                     verified,
-                    datetime.now(timezone.utc) if verified else None,
+                    datetime.now(UTC) if verified else None,
                     user_type,
                     referrer_id or "",
                     referral_code,

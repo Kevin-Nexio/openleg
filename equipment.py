@@ -3,7 +3,7 @@
 
 import ipaddress
 import re
-from datetime import date, datetime, timezone
+from datetime import UTC, date, datetime
 from decimal import Decimal, InvalidOperation
 from urllib.parse import urlsplit
 
@@ -225,7 +225,7 @@ def _evidence(payload, field):
             ):
                 raise ValueError
             parsed = date.fromisoformat(reviewed)
-            if parsed > datetime.now(timezone.utc).date():
+            if parsed > datetime.now(UTC).date():
                 raise ValueError
         except ValueError:
             raise EquipmentError(field=field + ".reviewed_on") from None

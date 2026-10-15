@@ -11,7 +11,7 @@ import logging
 import subprocess
 import sys
 from contextlib import contextmanager
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 from pathlib import Path
 
@@ -20,7 +20,7 @@ import pytest
 import database
 from store import metering
 
-MEASURED_AT = datetime(2026, 1, 5, 23, 0, tzinfo=timezone.utc)
+MEASURED_AT = datetime(2026, 1, 5, 23, 0, tzinfo=UTC)
 POINT = "CH000000000000000000000000000001"
 
 
@@ -608,7 +608,7 @@ def test_record_sdat_import_passes_the_complete_ledger_record(monkeypatch):
     cur = _FakeCursor()
     monkeypatch.setattr(database, "get_connection", _conn_ctx(cur))
 
-    created_at = datetime(2026, 1, 6, 1, 0, tzinfo=timezone.utc)
+    created_at = datetime(2026, 1, 6, 1, 0, tzinfo=UTC)
     period_end = MEASURED_AT + timedelta(days=5)
     result = metering.record_sdat_import(
         {

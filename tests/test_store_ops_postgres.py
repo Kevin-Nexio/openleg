@@ -5,7 +5,7 @@ import json
 import os
 import secrets
 from contextlib import contextmanager
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from urllib.parse import urlsplit, urlunsplit
 
 import psycopg2
@@ -15,9 +15,9 @@ import pytest
 
 import database
 
-T1 = datetime(2026, 6, 14, 10, 0, tzinfo=timezone.utc)
-T2 = datetime(2026, 6, 14, 10, 3, tzinfo=timezone.utc)
-T3 = datetime(2026, 6, 14, 10, 5, tzinfo=timezone.utc)
+T1 = datetime(2026, 6, 14, 10, 0, tzinfo=UTC)
+T2 = datetime(2026, 6, 14, 10, 3, tzinfo=UTC)
+T3 = datetime(2026, 6, 14, 10, 5, tzinfo=UTC)
 
 
 @contextmanager
