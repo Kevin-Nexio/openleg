@@ -137,11 +137,11 @@
             </td>
             <td class="px-4 py-3 text-right">
               <form method="post" action="/admin/registry/{{ entry.id }}/approve?token={{ request.args.get('token', '') }}" class="inline">
-                <button type="submit" class="bg-green-700 hover:bg-green-600 text-white text-xs px-3 py-1.5 rounded">Freischalten</button>
+                <button type="submit" class="bg-green-700 hover:bg-green-600 text-white text-xs px-3 py-1.5 rounded-sm">Freischalten</button>
               </form>
               <form method="post" action="/admin/registry/{{ entry.id }}/reject?token={{ request.args.get('token', '') }}" class="inline ml-2">
                 <input type="hidden" name="reason" value="">
-                <button type="submit" class="bg-red-800 hover:bg-red-700 text-white text-xs px-3 py-1.5 rounded">Ablehnen</button>
+                <button type="submit" class="bg-red-800 hover:bg-red-700 text-white text-xs px-3 py-1.5 rounded-sm">Ablehnen</button>
               </form>
             </td>
           </tr>
@@ -167,7 +167,7 @@
       <div class="flex items-center justify-between mb-2">
         <h2 class="font-semibold">{{ label }}</h2>
         {% if snapshot %}
-        <span class="text-xs px-2 py-1 rounded bg-gray-800 text-gray-300 uppercase">{{ snapshot.status }}</span>
+        <span class="text-xs px-2 py-1 rounded-sm bg-gray-800 text-gray-300 uppercase">{{ snapshot.status }}</span>
         {% else %}
         <span class="text-xs text-gray-600">No data</span>
         {% endif %}
@@ -175,7 +175,7 @@
       {% if snapshot %}
       <p class="text-sm text-gray-300 mb-2">{{ snapshot.summary_text or 'No summary' }}</p>
       <p class="text-xs text-gray-500 mb-3">{{ snapshot.created_at if snapshot.created_at else '' }}</p>
-      <pre class="text-xs text-gray-400 bg-gray-950 rounded p-3 overflow-x-auto">{{ snapshot.payload | tojson(indent=2) }}</pre>
+      <pre class="text-xs text-gray-400 bg-gray-950 rounded-sm p-3 overflow-x-auto">{{ snapshot.payload | tojson(indent=2) }}</pre>
       {% else %}
       <p class="text-sm text-gray-500">No snapshot recorded yet.</p>
       {% endif %}

@@ -129,7 +129,7 @@ def test_member_table_fits_mobile():
     assert "table-fixed" in members_table
     assert "sm:table-auto" in members_table
     for segment in members_table.split("<td")[1:]:
-        assert "break-words" in segment.split(">", 1)[0]
+        assert "wrap-break-word" in segment.split(">", 1)[0]
 
 
 # --- Formation actions (Slice 3) ---

@@ -76,7 +76,7 @@
             type="text" 
             id="municipality" 
             placeholder="z.B. Baden, Zürich, Bern" 
-            class="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand focus:border-brand focus:outline-none"
+            class="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand focus:border-brand focus:outline-hidden"
             autocomplete="off"
           />
           <div id="municipality-results" class="hidden mt-2 bg-white border border-slate-200 rounded-lg shadow-lg max-h-60 overflow-y-auto">
@@ -109,7 +109,7 @@
             max="15000" 
             step="100" 
             value="4500" 
-            class="range-slider focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-brand"
+            class="range-slider focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-brand"
             oninput="updateConsumption(this.value)"
           />
           <div class="flex justify-between text-xs text-ink-muted mt-1">
@@ -137,7 +137,7 @@
             max="100" 
             step="5" 
             value="60" 
-            class="range-slider focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-brand"
+            class="range-slider focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-brand"
             oninput="updateProduction(this.value)"
           />
           <div class="flex justify-between text-xs text-ink-muted mt-1">
@@ -152,7 +152,7 @@
           <label for="grid-reduction" class="block text-sm font-semibold mb-2">
             Netznutzungsrabatt
           </label>
-          <select id="grid-reduction" class="w-full border border-slate-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-brand focus:border-brand focus:outline-none">
+          <select id="grid-reduction" class="w-full border border-slate-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-brand focus:border-brand focus:outline-hidden">
             <option value="40" selected>Ohne Spannungstransformation</option>
             <option value="20">Mit Spannungstransformation</option>
           </select>
@@ -168,7 +168,7 @@
         <button 
           id="calculate-btn"
           onclick="calculateSavings()" 
-          class="bg-brand text-white px-12 py-4 rounded-lg text-lg font-bold hover:bg-brand-dark focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand disabled:bg-slate-200 disabled:text-slate-600 disabled:cursor-not-allowed"
+          class="bg-brand text-white px-12 py-4 rounded-lg text-lg font-bold hover:bg-brand-dark focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand disabled:bg-slate-200 disabled:text-slate-600 disabled:cursor-not-allowed"
           disabled
         >
           Sparpotenzial berechnen

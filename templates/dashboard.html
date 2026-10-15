@@ -6,7 +6,7 @@
 {% endblock %}
 
 {% block content %}
-<div class="max-w-6xl mx-auto px-4 pt-8 pb-16 overflow-x-hidden [&_a:focus-visible]:outline [&_a:focus-visible]:outline-2 [&_a:focus-visible]:outline-offset-2 [&_a:focus-visible]:outline-brand [&_button:focus-visible]:outline [&_button:focus-visible]:outline-2 [&_button:focus-visible]:outline-offset-2 [&_button:focus-visible]:outline-brand [&_input:focus-visible]:outline [&_input:focus-visible]:outline-2 [&_input:focus-visible]:outline-offset-2 [&_input:focus-visible]:outline-brand [&_select:focus-visible]:outline [&_select:focus-visible]:outline-2 [&_select:focus-visible]:outline-offset-2 [&_select:focus-visible]:outline-brand" data-dashboard-structure="personal-readiness">
+<div class="max-w-6xl mx-auto px-4 pt-8 pb-16 overflow-x-hidden [&_a:focus-visible]:outline-solid [&_a:focus-visible]:outline-2 [&_a:focus-visible]:outline-offset-2 [&_a:focus-visible]:outline-brand [&_button:focus-visible]:outline-solid [&_button:focus-visible]:outline-2 [&_button:focus-visible]:outline-offset-2 [&_button:focus-visible]:outline-brand [&_input:focus-visible]:outline-solid [&_input:focus-visible]:outline-2 [&_input:focus-visible]:outline-offset-2 [&_input:focus-visible]:outline-brand [&_select:focus-visible]:outline-solid [&_select:focus-visible]:outline-2 [&_select:focus-visible]:outline-offset-2 [&_select:focus-visible]:outline-brand" data-dashboard-structure="personal-readiness">
   {% if error %}
     <section class="max-w-xl mx-auto text-center py-16" role="alert">
       <h1 class="text-2xl font-bold mb-3">{{ error }}</h1>
@@ -187,7 +187,7 @@
             {% else %}
               <a href="/" class="block rounded-lg bg-brand px-4 py-3 text-center font-semibold text-white hover:bg-brand-dark">Eigenes Profil starten</a>
             {% endif %}
-            <button type="button" id="calc-btn" class="border border-brand text-brand px-4 py-3 rounded-lg font-semibold hover:bg-brand/5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand">Ersparnis berechnen</button>
+            <button type="button" id="calc-btn" class="border border-brand text-brand px-4 py-3 rounded-lg font-semibold hover:bg-brand/5 focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand">Ersparnis berechnen</button>
           </form>
           <div id="calc-error" class="hidden mt-3 rounded-lg border border-line bg-paper px-4 py-3 text-sm text-ink" role="alert"></div>
           <div id="savings-result" class="hidden mt-4 rounded-lg border border-sage bg-sage-light/50 p-4 text-center" aria-live="polite">
