@@ -156,7 +156,8 @@ def _power(value, field):
     return format(number.normalize(), "f")
 
 
-def _source_url(value, field):
+def validate_public_source_url(value, field="source_url"):
+    """Validate a public HTTPS documentation link without fetching it."""
     value = _text(value, 500, field)
     if value is None:
         return None
@@ -228,7 +229,7 @@ def _evidence(payload, field):
                 raise ValueError
         except ValueError:
             raise EquipmentError(field=field + ".reviewed_on") from None
-    url = _source_url(payload.get("source_url"), field + ".source_url")
+    url = validate_public_source_url(payload.get("source_url"), field + ".source_url")
     if (kind == "unknown" and (reviewed or url)) or (
         kind != "unknown" and not reviewed
     ):

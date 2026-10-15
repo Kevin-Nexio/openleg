@@ -41,6 +41,7 @@ import registration
 import security_utils
 import tenant as tenant_module
 from admin import admin_bp, require_admin
+from advisory_routes import advisory_bp
 from api_public import public_api_bp
 from cron import cron_bp
 from email_utils import send_email
@@ -994,6 +995,7 @@ def create_app(config=None, *, load_environment=True, check_database=True):
         operator_api_bp,
         telemetry_bp,
         equipment_bp,
+        advisory_bp,
     ):
         application.register_blueprint(blueprint)
     tenant_module.init_tenant_middleware(application, db=db)

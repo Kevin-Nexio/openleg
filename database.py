@@ -400,3 +400,15 @@ from store.equipment import (  # noqa: F401
     list_equipment,
     update_equipment,
 )
+
+from store.advisories import (  # noqa: F401
+    append_advisory_revision,
+    create_advisory,
+    get_advisory_history,
+    get_advisory_source_policy,
+    list_advisory_catalog,
+    list_advisory_source_reviews,
+    publish_advisory_revision,
+    record_advisory_source_review,
+    set_advisory_source_policy,
+)
