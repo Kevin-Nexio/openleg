@@ -115,11 +115,14 @@ def _dashboard_context(muni):
             )
             profile = None
     profile = profile or {}
-    interest_summary = (
-        db.get_municipality_interest_summary(int(muni["bfs_number"]))
-        if muni.get("bfs_number")
-        else {}
-    )
+    try:
+        interest_summary = (
+            db.get_municipality_interest_summary(int(muni["bfs_number"]), strict=True)
+            if muni.get("bfs_number")
+            else {}
+        )
+    except db.InterestReadUnavailable:
+        interest_summary = None
     role_labels = {
         "owner": "Eigentümer/in",
         "tenant": "Mieter/in",
@@ -143,7 +146,7 @@ def _dashboard_context(muni):
         "interest_summary": interest_summary,
         "interest_roles": [
             {"label": role_labels.get(role, role), "count": count}
-            for role, count in (interest_summary.get("roles") or {}).items()
+            for role, count in ((interest_summary or {}).get("roles") or {}).items()
         ],
         "error": None,
     }
@@ -313,7 +316,10 @@ def profil(bfs):
     )
     if ctx is None:
         abort(404)
-    interest_count = db.get_interest_count(bfs) or 0
+    try:
+        interest_count = db.get_interest_count(bfs, strict=True) or 0
+    except db.InterestReadUnavailable:
+        interest_count = None
     ctx["interest_count"] = interest_count
     ctx["interest_label"] = _public_interest_label(interest_count, confirmed=True)
     return render_template("gemeinde/profil.html", **ctx)
@@ -339,6 +345,8 @@ def _normalize_kanton_param(raw_value):
 
 
 def _public_interest_label(count, *, confirmed=False):
+    if count is None:
+        return "Nicht verfügbar"
     count = max(0, int(count or 0))
     noun = "bestätigte Interessierte" if confirmed else "Interessierte"
     if 0 < count < 3:
@@ -369,16 +377,23 @@ def verzeichnis():
             if query.lower() in (profile.get("name", "") or "").lower()
         ]
     ranking_rows = {row["bfs_number"]: row for row in Ranking.load().national()}
-    interest_counts = db.get_interest_counts_by_bfs()
+    try:
+        interest_counts = db.get_interest_counts_by_bfs(strict=True)
+    except db.InterestReadUnavailable:
+        interest_counts = None
     for profile in profiles:
         row = ranking_rows.get(profile.get("bfs_number"), {})
         profile["pv_rank"] = row.get("rank")
         profile["display_score"] = row.get("display_score")
         profile["score_over_100"] = row.get("score_over_100")
-        interest_count = interest_counts.get(profile.get("bfs_number"), 0)
+        interest_count = (
+            interest_counts.get(profile.get("bfs_number"), 0)
+            if interest_counts is not None
+            else None
+        )
         profile["interest_count"] = interest_count
         profile["interest_label"] = _public_interest_label(interest_count)
-    if order_by == "interest":
+    if order_by == "interest" and interest_counts is not None:
         profiles.sort(
             key=lambda profile: (
                 -(
@@ -394,7 +409,8 @@ def verzeichnis():
         profiles=profiles,
         kanton=kanton,
         query=query,
-        sort=order_by,
+        sort="name" if order_by == "interest" and interest_counts is None else order_by,
+        interest_available=interest_counts is not None,
         site_url=request.url_root.rstrip("/"),
         canton_options=[
             ("all", "Alle Kantone"),

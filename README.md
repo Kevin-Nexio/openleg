@@ -39,6 +39,11 @@ Cloud-access reviews and backup evidence remain separate. Owners can download a
 redacted installer handoff. OpenLEG does not verify the entered claims or change
 devices.
 
+Municipality profiles, the directory, and the municipality dashboard distinguish
+zero confirmed expressions of interest from temporarily unavailable counts. When
+counts cannot be loaded, interest sorting falls back to sorting by name. Public
+counts of one or two remain hidden as `< 3`.
+
 ### From meter reading to invoice
 
 The path from raw metering data to a member invoice runs as one workflow in this repository:
@@ -155,6 +160,12 @@ und eine Checkliste für ihr Modell, auch ohne LEG-Mitgliedschaft oder Telemetri
 Cloud-Zugriffe und Ersatzstromnachweise bleiben getrennt. Eigentümer können eine
 bereinigte Übergabe für den Installateur herunterladen. OpenLEG prüft die Angaben
 nicht und verändert keine Geräte.
+
+Gemeindeprofile, Verzeichnis und Gemeinde-Dashboard unterscheiden null bestätigte
+Interessenmeldungen von vorübergehend nicht verfügbaren Zahlen. Können die Zahlen
+nicht geladen werden, ersetzt das Verzeichnis die Sortierung nach Interesse durch
+die Sortierung nach Namen. Öffentliche Zahlen von eins oder zwei bleiben als
+`< 3` verborgen.
 
 ### Vom Zählerwert zur Rechnung
 
