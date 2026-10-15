@@ -69,7 +69,7 @@
           <input id="confirm-approval-{{ period.id }}" type="checkbox" name="confirm_approval" value="yes" required class="mt-1">
           <span>Ich habe Tarif, Abgleich und Quelldokumente geprüft und gebe die Rechnungen dieser Periode verbindlich frei.</span>
         </label>
-        <button type="submit" class="bg-brand text-white px-6 py-3 rounded-lg font-semibold hover:bg-brand-dark focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand">Rechnungen freigeben</button>
+        <button type="submit" class="bg-brand text-white px-6 py-3 rounded-lg font-semibold hover:bg-brand-dark focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand">Rechnungen freigeben</button>
       </form>
       {% elif can_prepare_billing %}
       <form method="post" action="/leg/community/{{ community_id }}/billing/period/{{ period.id }}/prepare">
@@ -78,7 +78,7 @@
           <input id="confirm-prepare-{{ period.id }}" type="checkbox" name="confirm_prepare" value="yes" required class="mt-1">
           <span>Ich habe Tarif, Abgleich und Quelldokumente geprüft und lege diesen Entwurf zur Freigabe vor.</span>
         </label>
-        <button type="submit" class="bg-brand text-white px-6 py-3 rounded-lg font-semibold hover:bg-brand-dark focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand">Zur Freigabe vorbereiten</button>
+        <button type="submit" class="bg-brand text-white px-6 py-3 rounded-lg font-semibold hover:bg-brand-dark focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand">Zur Freigabe vorbereiten</button>
       </form>
       {% elif can_approve_billing %}
       <p class="text-sm text-ink-muted">Warten auf die Vorbereitung durch eine andere Person.</p>

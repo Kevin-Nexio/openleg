@@ -8,7 +8,7 @@
     {% include 'partials/brand_head.html' %}
 </head>
 <body class="bg-gray-50 min-h-screen">
-    <nav class="bg-white shadow-sm">
+    <nav class="bg-white shadow-xs">
         <div class="max-w-4xl mx-auto px-4 py-3 flex justify-between items-center">
             {% include 'partials/brand_wordmark.html' %}
             <div class="flex space-x-4 text-sm">
@@ -20,7 +20,7 @@
 
     <div class="max-w-xl mx-auto px-4 py-12">
         <div class="overflow-hidden rounded-xl border border-gray-200 shadow-md mb-8">
-            <img src="/static/images/brand/flow-how-it-works.svg" alt="EVU Registrierung" class="w-full aspect-[3/1]" loading="lazy">
+            <img src="/static/images/brand/flow-how-it-works.svg" alt="EVU Registrierung" class="w-full aspect-3/1" loading="lazy">
         </div>
         <h1 class="text-3xl font-bold mb-2">Netzbetreiber-Zugang</h1>
         <p class="text-gray-600 mb-8">Registrieren Sie sich, damit OpenLEG LEG-Anmeldungen aus Ihrem Versorgungsgebiet an Sie weiterleiten kann. Kostenlos.</p>
@@ -28,16 +28,16 @@
         <form id="register-form" class="bg-white rounded-lg shadow-md p-6 space-y-4">
             <div>
                 <label for="company_name" class="block text-sm font-medium mb-1">Firmenname *</label>
-                <input type="text" id="company_name" placeholder="z.B. Regionalwerke AG Baden" class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-gray-400 focus:outline-none" required>
+                <input type="text" id="company_name" placeholder="z.B. Regionalwerke AG Baden" class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-gray-400 focus:outline-hidden" required>
             </div>
             <div>
                 <label for="vnb_name" class="block text-sm font-medium mb-1">Name des Netzbetreibers</label>
-                <input type="text" id="vnb_name" placeholder="z.B. Regionalwerke AG Baden Verteilnetz" class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-gray-400 focus:outline-none">
+                <input type="text" id="vnb_name" placeholder="z.B. Regionalwerke AG Baden Verteilnetz" class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-gray-400 focus:outline-hidden">
             </div>
             <div class="grid grid-cols-2 gap-4">
                 <div>
                     <label for="kanton" class="block text-sm font-medium mb-1">Kanton</label>
-                    <select id="kanton" class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-gray-400 focus:outline-none">
+                    <select id="kanton" class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-gray-400 focus:outline-hidden">
                         <option value="">Wählen...</option>
                         <option value="ZH">Zürich</option>
                         <option value="BE">Bern</option>
@@ -69,21 +69,21 @@
                 </div>
                 <div>
                     <label for="population" class="block text-sm font-medium mb-1">Versorgte Einwohner</label>
-                    <input type="number" id="population" placeholder="z.B. 50000" class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-gray-400 focus:outline-none">
+                    <input type="number" id="population" placeholder="z.B. 50000" class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-gray-400 focus:outline-hidden">
                 </div>
             </div>
             <hr class="my-2">
             <div>
                 <label for="contact_name" class="block text-sm font-medium mb-1">Ansprechperson</label>
-                <input type="text" id="contact_name" placeholder="Vor- und Nachname" class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-gray-400 focus:outline-none">
+                <input type="text" id="contact_name" placeholder="Vor- und Nachname" class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-gray-400 focus:outline-hidden">
             </div>
             <div>
                 <label for="contact_email" class="block text-sm font-medium mb-1">Geschäftliche E-Mail *</label>
-                <input type="email" id="contact_email" placeholder="kontakt@evu.ch" class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-gray-400 focus:outline-none" required>
+                <input type="email" id="contact_email" placeholder="kontakt@evu.ch" class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-gray-400 focus:outline-hidden" required>
             </div>
             <div>
                 <label for="contact_phone" class="block text-sm font-medium mb-1">Telefon</label>
-                <input type="tel" id="contact_phone" placeholder="+41 56 200 00 00" class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-gray-400 focus:outline-none">
+                <input type="tel" id="contact_phone" placeholder="+41 56 200 00 00" class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-gray-400 focus:outline-hidden">
             </div>
 
             <div class="bg-gray-50 p-4 rounded-lg text-sm">
@@ -101,7 +101,7 @@
                 <p class="text-gray-600">OpenLEG ist Open Source und kostenlos. Kein Abo, keine versteckten Kosten.</p>
             </div>
 
-            <button type="submit" class="w-full bg-gray-900 text-white py-3 rounded-lg font-semibold hover:bg-gray-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand">Registrieren</button>
+            <button type="submit" class="w-full bg-gray-900 text-white py-3 rounded-lg font-semibold hover:bg-gray-800 focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand">Registrieren</button>
             <div id="form-error" class="text-red-600 text-sm hidden"></div>
             <div id="form-success" class="text-green-600 text-sm hidden"></div>
         </form>

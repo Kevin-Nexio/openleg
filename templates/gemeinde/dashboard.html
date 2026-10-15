@@ -6,7 +6,7 @@
 {% endblock %}
 
 {% block content %}
-<div class="max-w-6xl mx-auto px-4 py-10 overflow-x-hidden [&_a:focus-visible]:outline [&_a:focus-visible]:outline-2 [&_a:focus-visible]:outline-offset-2 [&_a:focus-visible]:outline-brand [&_button:focus-visible]:outline [&_button:focus-visible]:outline-2 [&_button:focus-visible]:outline-offset-2 [&_button:focus-visible]:outline-brand [&_input:focus-visible]:outline [&_input:focus-visible]:outline-2 [&_input:focus-visible]:outline-offset-2 [&_input:focus-visible]:outline-brand" data-dashboard-structure="municipality-overview">
+<div class="max-w-6xl mx-auto px-4 py-10 overflow-x-hidden [&_a:focus-visible]:outline-solid [&_a:focus-visible]:outline-2 [&_a:focus-visible]:outline-offset-2 [&_a:focus-visible]:outline-brand [&_button:focus-visible]:outline-solid [&_button:focus-visible]:outline-2 [&_button:focus-visible]:outline-offset-2 [&_button:focus-visible]:outline-brand [&_input:focus-visible]:outline-solid [&_input:focus-visible]:outline-2 [&_input:focus-visible]:outline-offset-2 [&_input:focus-visible]:outline-brand" data-dashboard-structure="municipality-overview">
   {% if municipality %}
     <div class="flex flex-wrap items-start justify-between gap-4 mb-8">
       <div>
@@ -127,7 +127,7 @@
           <div class="flex gap-2">
             <label for="invite-link" class="sr-only">Einladungslink</label>
             <input type="text" id="invite-link" value="{{ invite_url }}" class="w-full min-w-0 border border-line rounded-lg px-3 py-2 text-sm bg-paper" readonly onclick="this.select()">
-            <button type="button" id="copy-invite" class="bg-brand text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-brand-dark focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand shrink-0">Kopieren</button>
+            <button type="button" id="copy-invite" class="bg-brand text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-brand-dark focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand shrink-0">Kopieren</button>
             <span id="copy-invite-status" role="status" class="sr-only"></span>
           </div>
         </section>

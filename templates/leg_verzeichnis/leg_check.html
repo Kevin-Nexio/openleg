@@ -20,8 +20,8 @@
     </header>
 
     <form method="get" action="/leg-check" class="flex flex-col gap-2 mb-10 sm:flex-row sm:items-end">
-      <div class="flex-1"><label for="q" class="block text-sm font-medium mb-1">Gemeinde</label><input type="text" id="q" name="q" value="{{ q }}" placeholder="z. B. Baden" class="w-full border border-slate-200 rounded-lg px-4 py-3 text-sm focus:outline focus:outline-2 focus:outline-brand"></div>
-      <button type="submit" class="bg-brand text-white px-6 py-3 rounded-lg font-semibold hover:bg-brand-dark focus:outline focus:outline-2 focus:outline-brand focus:outline-offset-2">Prüfen</button>
+      <div class="flex-1"><label for="q" class="block text-sm font-medium mb-1">Gemeinde</label><input type="text" id="q" name="q" value="{{ q }}" placeholder="z. B. Baden" class="w-full border border-slate-200 rounded-lg px-4 py-3 text-sm focus:outline-solid focus:outline-2 focus:outline-brand"></div>
+      <button type="submit" class="bg-brand text-white px-6 py-3 rounded-lg font-semibold hover:bg-brand-dark focus:outline-solid focus:outline-2 focus:outline-brand focus:outline-offset-2">Prüfen</button>
     </form>
 
     {% if profile %}

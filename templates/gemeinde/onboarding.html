@@ -22,7 +22,7 @@
     <form id="onboarding-form" class="bg-white rounded-xl border border-slate-200 p-6 space-y-5">
         <div>
             <label for="municipality-search" class="block text-sm font-medium mb-1">Gemeinde suchen</label>
-            <input type="text" id="municipality-search" placeholder="z. B. Dietikon" autocomplete="off" aria-describedby="selected-municipality" class="w-full border border-slate-200 rounded-lg px-3 py-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand">
+            <input type="text" id="municipality-search" placeholder="z. B. Dietikon" autocomplete="off" aria-describedby="selected-municipality" class="w-full border border-slate-200 rounded-lg px-3 py-2 focus:outline-hidden focus-visible:ring-2 focus-visible:ring-brand">
             <div id="search-results" class="mt-2 border border-slate-200 rounded-lg bg-white hidden max-h-56 overflow-y-auto"></div>
             <input type="hidden" id="selected-bfs">
             <input type="hidden" id="selected-name">
@@ -30,11 +30,11 @@
         </div>
         <div>
             <label for="admin-email" class="block text-sm font-medium mb-1">Kontakt-E-Mail der Gemeindeverwaltung</label>
-            <input type="email" id="admin-email" placeholder="gemeinde@example.ch" class="w-full border border-slate-200 rounded-lg px-3 py-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand" required>
+            <input type="email" id="admin-email" placeholder="gemeinde@example.ch" class="w-full border border-slate-200 rounded-lg px-3 py-2 focus:outline-hidden focus-visible:ring-2 focus-visible:ring-brand" required>
         </div>
         <div>
             <label for="contact-name" class="block text-sm font-medium mb-1">Ansprechperson</label>
-            <input type="text" id="contact-name" placeholder="Vor- und Nachname" class="w-full border border-slate-200 rounded-lg px-3 py-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand">
+            <input type="text" id="contact-name" placeholder="Vor- und Nachname" class="w-full border border-slate-200 rounded-lg px-3 py-2 focus:outline-hidden focus-visible:ring-2 focus-visible:ring-brand">
         </div>
         <div class="border-y border-slate-200 py-4 text-sm">
             <h2 class="font-medium mb-1">Was Ihre Gemeinde kostenlos erhält</h2>
@@ -46,7 +46,7 @@
                 <li>&#10003; Keine versteckten Kosten, kein Abo, keine Anbieterbindung</li>
             </ul>
         </div>
-        <button type="submit" class="w-full bg-brand text-white py-3 rounded-lg font-semibold hover:bg-brand-dark focus:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2">Gemeinde anmelden</button>
+        <button type="submit" class="w-full bg-brand text-white py-3 rounded-lg font-semibold hover:bg-brand-dark focus:outline-hidden focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2">Gemeinde anmelden</button>
         <div id="form-error" role="alert" aria-live="assertive" class="text-red-600 text-sm hidden"></div>
         <div id="form-success" role="status" aria-live="polite" class="text-green-700 text-sm hidden"></div>
     </form>
