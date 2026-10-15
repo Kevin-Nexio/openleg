@@ -36,7 +36,7 @@
       <p>{{ labels[item.status] }}</p>
       {% if item.status == 'pending' %}<p>Gültig bis {{ item.expires_at.strftime('%d.%m.%Y %H:%M') }} UTC</p>{% endif %}
       {% if item.contact %}
-      <dl class="break-words">
+      <dl class="wrap-break-word">
         {% if item.contact.email %}<dt>E-Mail-Adresse</dt><dd>{{ item.contact.email }}</dd>{% endif %}
         {% if item.contact.phone %}<dt>Telefonnummer</dt><dd>{{ item.contact.phone }}</dd>{% endif %}
       </dl>

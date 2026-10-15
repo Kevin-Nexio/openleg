@@ -17,7 +17,7 @@
   {% set can_approve_billing = can_approve_billing|default(is_admin) %}
   {% set can_audit_billing = can_audit_billing|default(is_admin) %}
   {% set access_role_labels = access_role_labels|default({}) %}
-  <div class="max-w-6xl mx-auto px-4 py-12 overflow-x-hidden [&_a:focus-visible]:outline [&_a:focus-visible]:outline-2 [&_a:focus-visible]:outline-offset-2 [&_a:focus-visible]:outline-brand [&_button:focus-visible]:outline [&_button:focus-visible]:outline-2 [&_button:focus-visible]:outline-offset-2 [&_button:focus-visible]:outline-brand [&_input:focus-visible]:outline [&_input:focus-visible]:outline-2 [&_input:focus-visible]:outline-offset-2 [&_input:focus-visible]:outline-brand [&_select:focus-visible]:outline [&_select:focus-visible]:outline-2 [&_select:focus-visible]:outline-offset-2 [&_select:focus-visible]:outline-brand" data-dashboard-structure="community-operations">
+  <div class="max-w-6xl mx-auto px-4 py-12 overflow-x-hidden [&_a:focus-visible]:outline-solid [&_a:focus-visible]:outline-2 [&_a:focus-visible]:outline-offset-2 [&_a:focus-visible]:outline-brand [&_button:focus-visible]:outline-solid [&_button:focus-visible]:outline-2 [&_button:focus-visible]:outline-offset-2 [&_button:focus-visible]:outline-brand [&_input:focus-visible]:outline-solid [&_input:focus-visible]:outline-2 [&_input:focus-visible]:outline-offset-2 [&_input:focus-visible]:outline-brand [&_select:focus-visible]:outline-solid [&_select:focus-visible]:outline-2 [&_select:focus-visible]:outline-offset-2 [&_select:focus-visible]:outline-brand" data-dashboard-structure="community-operations">
     {% if error %}
     <div class="bg-paper border border-slate-200 rounded-xl p-8 text-center" role="alert">
       <p class="font-semibold text-ink mb-1">{{ error }}</p>
@@ -84,7 +84,7 @@
       </div>
       {% endif %}
       {% if battery and battery.shares %}
-      <div class="overflow-x-auto"><table class="w-full min-w-[36rem] text-sm">
+      <div class="overflow-x-auto"><table class="w-full min-w-xl text-sm">
         <caption class="sr-only">Kostenanteile am Quartierakku</caption>
         <thead class="bg-slate-50">
           <tr>
@@ -96,7 +96,7 @@
         <tbody class="divide-y">
           {% for share in battery.shares %}
           <tr>
-            <td class="px-3 py-2 break-words">{{ share.address }}{% if share.building_id == viewer_building_id %} <span class="text-xs text-brand">(Sie)</span>{% endif %}</td>
+            <td class="px-3 py-2 wrap-break-word">{{ share.address }}{% if share.building_id == viewer_building_id %} <span class="text-xs text-brand">(Sie)</span>{% endif %}</td>
             <td class="px-3 py-2 text-right font-mono tabular-nums">{{ share.share_display }}</td>
             <td class="px-3 py-2 text-right font-mono tabular-nums">{{ share.cost_display }}</td>
           </tr>
@@ -128,13 +128,13 @@
           <div class="sm:col-span-2 grid gap-2">
             {% for member in community.members if member.status == 'confirmed' %}
             <div class="flex flex-wrap items-center gap-3 text-sm">
-              <label for="battery-share-{{ loop.index }}" class="flex-1 min-w-[14rem] break-words">{{ member.address or member.building_id }}</label>
+              <label for="battery-share-{{ loop.index }}" class="flex-1 min-w-56 wrap-break-word">{{ member.address or member.building_id }}</label>
               <input id="battery-share-{{ loop.index }}" type="text" inputmode="decimal" name="share:{{ member.building_id }}" value="{{ (battery_form_values|default({})).get('share:' + member.building_id, '') }}" placeholder="Anteil in %" class="w-28 border rounded-lg px-3 py-2 text-sm">
             </div>
             {% endfor %}
             {% if (battery_errors|default({})).get('shares') %}<p class="text-sm text-accent" role="alert">{{ battery_errors['shares'] }}</p>{% endif %}
           </div>
-          <button type="submit" class="sm:col-span-2 bg-brand text-white px-6 py-3 rounded-lg font-semibold hover:bg-brand-dark focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand">Quartierakku speichern</button>
+          <button type="submit" class="sm:col-span-2 bg-brand text-white px-6 py-3 rounded-lg font-semibold hover:bg-brand-dark focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand">Quartierakku speichern</button>
         </form>
       </details>
       {% endif %}
@@ -158,15 +158,15 @@
         <tbody class="divide-y">
           {% for member in community.members %}
           <tr>
-            <td class="px-5 py-3 break-words">{{ member.address or member.building_id }}{% if member.building_id == viewer_building_id %} <span class="text-xs text-brand">(Sie)</span>{% endif %}</td>
-            <td class="px-5 py-3 break-words text-ink-muted">{{ member.role_label }}</td>
-            <td class="px-5 py-3 break-words">
+            <td class="px-5 py-3 wrap-break-word">{{ member.address or member.building_id }}{% if member.building_id == viewer_building_id %} <span class="text-xs text-brand">(Sie)</span>{% endif %}</td>
+            <td class="px-5 py-3 wrap-break-word text-ink-muted">{{ member.role_label }}</td>
+            <td class="px-5 py-3 wrap-break-word">
               <span class="text-xs font-semibold {{ 'text-ink' if member.status == 'confirmed' else 'text-ink-muted' }}">{{ member.status_label }}</span>
             </td>
           </tr>
           {% if can_manage_members and viewer_has_session and member.status == 'confirmed' %}
           <tr>
-            <td colspan="3" class="px-5 pb-4 break-words">
+            <td colspan="3" class="px-5 pb-4 wrap-break-word">
               <form method="post" action="/leg/community/{{ community.community_id }}/members/{{ member.building_id }}/roles" class="flex flex-wrap items-center gap-3 text-xs">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
                 {% for role, label in access_role_labels.items() %}
@@ -235,7 +235,7 @@
       {% if not vnb_exchange_available|default(true) %}<p class="mb-4 rounded-lg border border-accent bg-accent/10 px-4 py-3 text-sm" role="status">Der VNB-Austausch ist derzeit nicht verfügbar.</p>{% endif %}
       <p class="text-sm text-ink-muted mb-4">Die Mitgliederliste oben ist der Vertragsstand der LEG. Die Vorgänge hier zeigen separat, was der Netzbetreiber verarbeitet. Eine VNB-Antwort ändert den LEG-Vertrag nicht.</p>
       {% if vnb_mutations|default([]) %}
-      <div class="overflow-x-auto mb-4"><table class="w-full min-w-[48rem] text-sm">
+      <div class="overflow-x-auto mb-4"><table class="w-full min-w-3xl text-sm">
         <caption class="sr-only">Mitgliedermutationen und deren VNB-Verarbeitungsstatus</caption>
         <thead><tr><th scope="col" class="text-left p-2">LEG-Vorgang</th><th scope="col" class="text-left p-2">Person</th><th scope="col" class="text-left p-2">Wirksam</th><th scope="col" class="text-left p-2">VNB-Status</th><th scope="col" class="text-left p-2">Antwort</th></tr></thead>
         <tbody class="divide-y">{% for mutation in vnb_mutations %}<tr>
@@ -299,7 +299,7 @@
       <h2 class="font-bold mb-2">Korrespondenz</h2>
       <p class="text-sm text-ink-muted mb-4">Gemeinsames Journal aller ein- und ausgehenden Briefe und E-Mails, zum Beispiel mit dem Netzbetreiber. So sieht die ganze LEG, was gesendet wurde und was beantwortet ist.</p>
       {% if correspondence %}
-      <div class="overflow-x-auto mb-4"><table class="w-full min-w-[42rem] text-sm">
+      <div class="overflow-x-auto mb-4"><table class="w-full min-w-2xl text-sm">
         <caption class="sr-only">Korrespondenzjournal dieser Stromgemeinschaft</caption>
         <thead class="bg-slate-50">
           <tr>
@@ -343,12 +343,12 @@
         <div><label for="correspondence-subject" class="block text-sm font-semibold mb-1">Betreff</label><input id="correspondence-subject" type="text" name="subject" class="w-full border rounded-lg px-3 py-2 text-sm"></div>
         <div class="sm:col-span-2"><label for="correspondence-notes" class="block text-sm font-semibold mb-1">Notiz <span class="font-normal text-ink-muted">optional</span></label><input id="correspondence-notes" type="text" name="notes" class="w-full border rounded-lg px-3 py-2 text-sm"></div>
         <div class="sm:col-span-2"><label for="correspondence-attachment" class="block text-sm font-semibold mb-1">PDF-Anhang <span class="font-normal text-ink-muted">optional, höchstens 2 MB</span></label><input id="correspondence-attachment" type="file" name="attachment" accept="application/pdf,.pdf" class="w-full border rounded-lg px-3 py-2 text-sm"></div>
-        <button type="submit" class="sm:col-span-2 bg-brand text-white px-6 py-3 rounded-lg font-semibold hover:bg-brand-dark focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand">Eintrag hinzufügen</button>
+        <button type="submit" class="sm:col-span-2 bg-brand text-white px-6 py-3 rounded-lg font-semibold hover:bg-brand-dark focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand">Eintrag hinzufügen</button>
       </form>
       {% else %}
       <div class="rounded-lg border border-dashed border-line px-4 py-4 text-sm text-ink-muted">
         <p class="mb-3">Im Nur-Lesezugriff sehen Sie das Journal, können aber nichts verändern.</p>
-        <a href="/dashboard" class="inline-flex items-center rounded-lg border border-line px-4 py-2 font-semibold text-ink hover:bg-slate-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand">Vollzugriff im persönlichen Dashboard anfordern</a>
+        <a href="/dashboard" class="inline-flex items-center rounded-lg border border-line px-4 py-2 font-semibold text-ink hover:bg-slate-50 focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand">Vollzugriff im persönlichen Dashboard anfordern</a>
       </div>
       {% endif %}
     </section>
@@ -385,8 +385,8 @@
     <section class="bg-white rounded-xl border p-6">
       <h2 class="font-bold mb-2">Abrechnungs-Richtlinie</h2>
       <p class="text-sm text-ink-muted mb-4">Legen Sie Preise, Netzentgelt, Mehrwertsteuer und Zustellung versioniert fest. Die Richtlinie steuert künftige Abrechnungsentwürfe.</p>
-      {% if can_prepare_billing %}<a href="/leg/community/{{ community.community_id }}/billing-policy" class="inline-flex items-center rounded-lg bg-brand text-white px-6 py-3 font-semibold hover:bg-brand-dark focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand">Richtlinie verwalten</a>{% endif %}
-      <a href="/leg/community/{{ community.community_id }}/billing" class="inline-flex items-center rounded-lg border border-ink/20 px-6 py-3 font-semibold text-ink hover:bg-slate-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand">Abrechnungen öffnen</a>
+      {% if can_prepare_billing %}<a href="/leg/community/{{ community.community_id }}/billing-policy" class="inline-flex items-center rounded-lg bg-brand text-white px-6 py-3 font-semibold hover:bg-brand-dark focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand">Richtlinie verwalten</a>{% endif %}
+      <a href="/leg/community/{{ community.community_id }}/billing" class="inline-flex items-center rounded-lg border border-ink/20 px-6 py-3 font-semibold text-ink hover:bg-slate-50 focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand">Abrechnungen öffnen</a>
     </section>
     {% endif %}
 
@@ -404,7 +404,7 @@
     <section class="bg-white rounded-xl border p-6">
       <h2 class="font-bold mb-2">Gründung starten</h2>
       <p class="text-sm text-ink-muted mb-4">Im Nur-Lesezugriff sehen Sie den Stand der LEG, starten aber keine Änderungen.</p>
-      <a href="/dashboard" class="inline-flex items-center rounded-lg border border-ink/20 px-6 py-3 font-semibold text-ink hover:bg-slate-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand">Vollzugriff im persönlichen Dashboard anfordern</a>
+      <a href="/dashboard" class="inline-flex items-center rounded-lg border border-ink/20 px-6 py-3 font-semibold text-ink hover:bg-slate-50 focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand">Vollzugriff im persönlichen Dashboard anfordern</a>
     </section>
     {% endif %}
     {% endif %}
