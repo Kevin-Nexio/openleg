@@ -33,6 +33,11 @@ The current code covers formation records, VNB handovers, participant changes, s
 | Municipality | `/gemeinde/dashboard` | Open the municipality dashboard. |
 | Developer or self-hoster | `/api/v1/docs` | Use the API or run your own instance. |
 
+Municipality profiles, the directory, and the municipality dashboard distinguish
+zero confirmed expressions of interest from temporarily unavailable counts. When
+counts cannot be loaded, the directory falls back to sorting by name. Public
+counts of one or two remain hidden as `< 3`.
+
 ### From meter reading to invoice
 
 The path from raw metering data to a member invoice runs as one workflow in this repository:
@@ -143,6 +148,11 @@ Der aktuelle Code deckt Gründungsunterlagen, VNB-Übergaben, Teilnehmeränderun
 | LEG-Betreiber | `/leg/dashboard` | Mitglieder, Verträge, Messung und Abrechnung verwalten. |
 | Gemeinde | `/gemeinde/dashboard` | Gemeinde-Dashboard öffnen. |
 | Entwickler oder Selbsthoster | `/api/v1/docs` | API nutzen oder eigene Instanz betreiben. |
+
+Gemeindeprofile, Verzeichnis und Gemeinde-Dashboard unterscheiden null bestätigte
+Interessenmeldungen von vorübergehend nicht verfügbaren Zahlen. Können die Zahlen
+nicht geladen werden, sortiert das Verzeichnis nach Namen. Öffentliche Zahlen von
+eins oder zwei bleiben als `< 3` verborgen.
 
 ### Vom Zählerwert zur Rechnung
 

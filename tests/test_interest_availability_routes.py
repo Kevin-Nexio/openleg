@@ -15,6 +15,27 @@ interest_database = test_interest_postgres.interest_database
 pytestmark = pytest.mark.integration
 
 
+@pytest.fixture(autouse=True)
+def application_environment(monkeypatch):
+    for key, value in {
+        "APP_BASE_URL": "http://localhost:5003",
+        "SECRET_KEY": "interest-availability-test-key",
+        "SESSION_COOKIE_SECURE": "false",
+        "SESSION_COOKIE_SAMESITE": "Lax",
+        "PERMANENT_SESSION_LIFETIME": "3600",
+        "DASHBOARD_ACCESS_TOKEN_TTL_SECONDS": "900",
+        "DASHBOARD_EMAIL_TOKEN_TTL_SECONDS": "86400",
+        "PUBLIC_SITE_URL": "https://openleg.ch",
+        "ALLOWED_HOSTS": "localhost,127.0.0.1",
+        "ADMIN_EMAIL": "admin@example.ch",
+        "CRON_SECRET": "",
+        "REDIS_URL": "memory://",
+        "MATOMO_SITE_ID": "",
+        "GA4_MEASUREMENT_ID": "",
+    }.items():
+        monkeypatch.setenv(key, value)
+
+
 @pytest.fixture
 def interest_client(interest_database, app_module, monkeypatch):
     for bfs, name in ((2554, "Alphawil"), (999, "Zetwil")):
