@@ -35,7 +35,7 @@ The current code covers formation records, VNB handovers, participant changes, s
 
 Municipality profiles, the directory, and the municipality dashboard distinguish
 zero confirmed expressions of interest from temporarily unavailable counts. When
-counts cannot be loaded, the directory falls back to sorting by name. Public
+counts cannot be loaded, interest sorting falls back to sorting by name. Public
 counts of one or two remain hidden as `< 3`.
 
 ### From meter reading to invoice
@@ -151,8 +151,9 @@ Der aktuelle Code deckt Gründungsunterlagen, VNB-Übergaben, Teilnehmeränderun
 
 Gemeindeprofile, Verzeichnis und Gemeinde-Dashboard unterscheiden null bestätigte
 Interessenmeldungen von vorübergehend nicht verfügbaren Zahlen. Können die Zahlen
-nicht geladen werden, sortiert das Verzeichnis nach Namen. Öffentliche Zahlen von
-eins oder zwei bleiben als `< 3` verborgen.
+nicht geladen werden, ersetzt das Verzeichnis die Sortierung nach Interesse durch
+die Sortierung nach Namen. Öffentliche Zahlen von eins oder zwei bleiben als
+`< 3` verborgen.
 
 ### Vom Zählerwert zur Rechnung
 
