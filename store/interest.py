@@ -10,6 +10,10 @@ UNVERIFIED_INTEREST_RETENTION_DAYS = 30
 VERIFIED_COVERAGE_RETENTION_MONTHS = 12
 
 
+class InterestReadUnavailable(RuntimeError):
+    """An interest query failed, independently of an empty result."""
+
+
 def _get_connection():
     import database
 
@@ -168,8 +172,8 @@ def get_operator_interest_counts():
         return {"interest_verified": None, "interest_unverified": None}
 
 
-def get_interest_counts_by_bfs():
-    """Return exact verified household totals keyed by BFS municipality."""
+def get_interest_counts_by_bfs(*, strict=False):
+    """Return exact household totals; strict readers raise on query failure."""
     try:
         with _get_connection() as conn, conn.cursor() as cur:
             cur.execute(
@@ -185,14 +189,16 @@ def get_interest_counts_by_bfs():
             }
     except Exception:
         logger.exception("[DB] Error loading municipality interest counts")
+        if strict:
+            raise InterestReadUnavailable from None
         return {}
 
 
-def get_interest_count(bfs_number):
+def get_interest_count(bfs_number, *, strict=False):
     """Return a municipality total, or None for an absent/failed lookup.
 
-    The distinction preserves the profile's zero and notification's one
-    fallbacks without querying the national aggregate.
+    Strict readers raise on query failure; an absent municipality stays None.
+    The default keeps the notification's existing one-person fallback.
     """
     try:
         with _get_connection() as conn, conn.cursor() as cur:
@@ -207,6 +213,8 @@ def get_interest_count(bfs_number):
             return int(row["interest_count"]) if row else None
     except Exception:
         logger.exception("[DB] Error loading municipality interest count")
+        if strict:
+            raise InterestReadUnavailable from None
         return None
 
 
@@ -234,8 +242,8 @@ def get_verified_interest_recipients(bfs_number, exclude_email=""):
         return []
 
 
-def get_municipality_interest_summary(bfs_number):
-    """Return aggregate-only demand facts for a municipality dashboard."""
+def get_municipality_interest_summary(bfs_number, *, strict=False):
+    """Return aggregate demand facts; strict readers raise on query failure."""
     try:
         with _get_connection() as conn, conn.cursor() as cur:
             cur.execute(
@@ -268,4 +276,6 @@ def get_municipality_interest_summary(bfs_number):
             return summary
     except Exception:
         logger.exception("[DB] Error loading municipality interest summary")
+        if strict:
+            raise InterestReadUnavailable from None
         return {}
