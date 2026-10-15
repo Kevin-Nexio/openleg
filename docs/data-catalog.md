@@ -19,6 +19,8 @@ consent and community administrator roles do not grant telemetry access.
 
 ## store/equipment
 
+The equipment advisory workflow is documented under `store/advisories` below.
+
 - Table: `equipment_records` (DDL in `store/equipment.py`).
 - Holds: owner `building_id`, record UUID, creation/update times and a private
   JSON record. It contains manufacturer/model, firmware, logger, AC kW and
@@ -542,3 +544,37 @@ it.
 - **Holds:** stable idempotency responses for scoped case and payment actions.
 - **Sensitivity:** private operational data; read models redact invoice snapshots, correspondence, and source evidence.
 - **Resident-visible:** no.
+
+## store/advisories
+
+- Tables: `advisory_catalog`, `advisory_revisions`, `advisory_publications`,
+  `advisory_review_policies`, `advisory_source_reviews`,
+  `equipment_advisory_actions` (DDL in `store/advisories.py`).
+- Catalog holds public-source URLs, publisher/revision/publication date,
+  manufacturer/model names and explicit aliases, firmware bounds/profile,
+  remedy text/links, withdrawals and correction notes. Content revisions and
+  publication approvals are append-only. Approval binds an exact SHA-256 digest,
+  named reviewer and review date; reviewer identifiers are private admin data.
+- Source policy holds a private named review owner, bounded cadence, public
+  scope description, exact covered source URLs and enabled state. New policy
+  versions require their own complete successful manual source review. Review
+  events retain failures and latest successful review dates. No feed or
+  continuous collection is implemented.
+- Owner evidence holds equipment/advisory/revision references, the exact saved
+  manufacturer/model/firmware context and digest, acknowledgement, owner-declared
+  remedy state, dated evidence and optional private note. It does not verify a
+  remedy or change firmware matching.
+- Access: catalog administration requires `X-Admin-Token`, including reads of
+  reviewer identities. URL/form credentials are rejected. Equipment matches,
+  acknowledgements and remedy notes require the current verified equipment
+  owner's dashboard session. LEG administration, neighbour consent, telemetry
+  grants and admin catalog credentials grant no equipment access.
+- Output: owners receive published source facts, reasons, coverage/dates and
+  source status. Drafts and private maintainer identifiers are omitted. Text is
+  escaped; only validated public HTTPS documentation links are accepted. Every
+  owner/admin response uses no-store and no-referrer headers.
+- Purpose: private installation review with an installer. No external notices,
+  firmware installation, settings changes or attack detection.
+- Deletion: equipment/profile deletion cascades to all private owner action
+  rows. Public source revisions, approvals and source-review history remain
+  independent of registration deletion. Catalog/audit expiry is not implemented.

@@ -36,6 +36,7 @@ Invoice-question response and reminder dates use
 | store/metering | Life of the LEG's accounting | Not implemented; metering points detach (`ON DELETE SET NULL`) on profile deletion | The link to the deleted building; readings and ledger stay | Readings and the SDAT ledger: the VNB's validated data is the billing basis; audit trail |
 | store/telemetry | Product defaults: raw 7 days, hourly statistics 90 days; owner can shorten to 1–7 and 1–90 days respectively. These are not legal or billing retention requirements. | Read-time expiry; `POST /api/cron/cleanup-telemetry` physically deletes expired rows; shorter settings clean immediately; owner deletes an installation; owner membership/profile or community deletion cascades | Installation deletion removes samples, statistics, grants and hashed credential. Raw expiry considers both observation and receipt time; missing observations use receipt only for deletion. Statistics expire by observation hour. | A sequence watermark survives expiry and credential rotation to reject replay. Credential revocation preserves history until its horizon; sharing revocation removes viewer access immediately but does not delete owner history. Installation deletion keeps nothing. |
 | store/equipment | Until the owner deletes the equipment or registration | Owner equipment deletion; profile deletion cascades through `owner_building_id` | The equipment row including serial, network details, private notes, named remote users, checklist, manual cloud review and backup evidence | No database history survives. Owner-downloaded handoffs remain outside application deletion. |
+| store/advisories | Public source and maintainer audit: deployment lifetime, no expiry implemented. Private equipment actions: until equipment/profile deletion. | Equipment/profile deletion cascades owner action rows | Device-context snapshots, acknowledgement, remedy evidence and private notes | Public source revisions, approvals, policy/review history and private maintainer identifiers remain independently of household profiles. |
 | store/calculated_values | Life of the LEG's accounting | Not implemented | - | Original VNB evidence, normalized allocations, validation outcome, and replay fingerprint |
 | store/operator_api | Credential lifetime plus operational audit period | Credential revocation; audit cleanup not implemented | Active API access | Hashed credential and delivery audit records |
 | store/operator_operations | Operational replay window | Expiry cleanup not implemented | - | Minimal idempotency responses |
@@ -104,3 +105,18 @@ email-provider retention remain governed by the deployment's policies.
 
 The wording decisions themselves are human calls; this matrix records what
 the code actually reaches so the claims can be brought in line.
+
+## Reviewed advisories (#619)
+
+Catalog revisions, publication approvals, policy revisions and manual source
+reviews remain for the deployment lifetime; no automated cleanup is implemented.
+These rows retain public evidence/corrections/withdrawals and private maintainer
+identifiers. They do not reference a household registration.
+
+`equipment_advisory_actions` lasts until the owner deletes the equipment or
+registration. Both routes cascade to its device-context snapshots,
+acknowledgements, remedy evidence and private notes. Corrections and firmware
+changes preserve earlier owner evidence for the same equipment but do not reuse
+its acknowledgement for the new source revision/device context. No evidence is
+sent to an external recipient. Database deletion does not alter any copies an
+owner made outside the application.

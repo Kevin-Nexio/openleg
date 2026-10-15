@@ -75,12 +75,8 @@ def _revision(row, latest_published=None):
         "revision": row["revision"],
         "entry": row["content"],
         "digest": row["digest"],
-        "state": "draft"
-        if not published
-        else (
-            "superseded"
-            if latest_published and row["revision"] < latest_published
-            else row["content"]["status"]
+        "state": advisories.revision_state(
+            row["content"]["status"], published, row["revision"], latest_published or 0
         ),
         "review": {
             "reviewer_id": row["reviewer_id"],
@@ -297,3 +293,135 @@ def list_advisory_source_reviews():
             }
             for row in cur.fetchall()
         ]
+
+
+def _equipment(cur, actor, equipment_id):
+    cur.execute(
+        "SELECT verified FROM buildings WHERE building_id=%s FOR UPDATE", (actor,)
+    )
+    row = cur.fetchone()
+    if not row or not row["verified"]:
+        raise AdvisoryError("verified_owner_required", 403)
+    cur.execute(
+        "SELECT id,record FROM equipment_records WHERE id=%s AND owner_building_id=%s",
+        (equipment_id, actor),
+    )
+    row = cur.fetchone()
+    if not row:
+        raise AdvisoryError("equipment_not_found", 404)
+    return {"id": str(row["id"]), **row["record"]}
+
+
+def _published(cur):
+    cur.execute("""
+        SELECT DISTINCT ON(r.advisory_id) r.*,p.reviewer_id,p.reviewed_on
+        FROM advisory_revisions r INNER JOIN advisory_publications p
+          ON p.advisory_id=r.advisory_id AND p.revision=r.revision
+        ORDER BY r.advisory_id,r.revision DESC
+    """)
+    return [_revision(row) for row in cur.fetchall()]
+
+
+def get_equipment_advisories(actor, equipment_id):
+    with _get_connection() as conn, conn.cursor() as cur:
+        equipment = _equipment(cur, actor, equipment_id)
+        return _notices(cur, equipment)
+
+
+def _actions(cur, equipment_id):
+    cur.execute(
+        """
+        SELECT a.*,r.content->>'reference' AS reference,r.content->>'title' AS title,
+               r.content->>'source_url' AS source_url
+        FROM equipment_advisory_actions a
+        INNER JOIN advisory_revisions r ON r.advisory_id=a.advisory_id AND r.revision=a.revision
+        WHERE a.equipment_id=%s ORDER BY a.updated_at DESC LIMIT 100
+    """,
+        (equipment_id,),
+    )
+    return [
+        {
+            "advisory_id": str(row["advisory_id"]),
+            "revision": row["revision"],
+            "context_digest": row["context_digest"],
+            "device_context": row["device_context"],
+            "action": row["action"],
+            "reference": row["reference"],
+            "title": row["title"],
+            "source_url": row["source_url"],
+            "updated_at": row["updated_at"].isoformat(),
+        }
+        for row in cur.fetchall()
+    ]
+
+
+def _notices(cur, equipment):
+    publications = _published(cur)
+    cur.execute("""
+        SELECT r.*,p.reviewer_id,p.reviewed_on FROM advisory_revisions r
+        INNER JOIN advisory_publications p ON p.advisory_id=r.advisory_id AND p.revision=r.revision
+        WHERE p.revision < (SELECT MAX(newer.revision) FROM advisory_publications newer WHERE newer.advisory_id=p.advisory_id)
+        ORDER BY p.published_at DESC,p.advisory_id,p.revision DESC LIMIT 51
+    """)
+    previous = cur.fetchall()
+    publications.extend(_revision(row) for row in previous[:50])
+    health = _health(cur, _policy(cur))
+    return advisories.assess_catalog(
+        equipment,
+        publications,
+        _actions(cur, equipment["id"]),
+        health,
+        history_truncated=len(previous) > 50,
+    )
+
+
+def record_equipment_advisory_action(
+    actor, equipment_id, advisory_id, revision, payload
+):
+    with _get_connection() as conn, conn.cursor() as cur:
+        equipment = _equipment(cur, actor, equipment_id)
+        cur.execute("LOCK TABLE advisory_review_policies IN SHARE MODE")
+        cur.execute(
+            "SELECT advisory_id FROM advisory_catalog WHERE advisory_id=%s FOR SHARE",
+            (advisory_id,),
+        )
+        notices = _notices(cur, equipment)
+        assessment = next(
+            (
+                item
+                for item in notices["assessments"]
+                if item["advisory_id"] == advisory_id and item["revision"] == revision
+            ),
+            None,
+        )
+        if not assessment or not assessment["action_allowed"]:
+            raise AdvisoryError("notice_unavailable", 409)
+        action = advisories.validate_owner_action(payload, notices["context_digest"])
+        cur.execute(
+            "SELECT COUNT(*) AS count FROM equipment_advisory_actions WHERE equipment_id=%s",
+            (equipment_id,),
+        )
+        count = cur.fetchone()["count"]
+        cur.execute(
+            "SELECT 1 FROM equipment_advisory_actions WHERE equipment_id=%s AND advisory_id=%s AND revision=%s AND context_digest=%s",
+            (equipment_id, advisory_id, revision, notices["context_digest"]),
+        )
+        if not cur.fetchone() and count >= 500:
+            raise AdvisoryError("action_limit_reached", 409)
+        cur.execute(
+            """
+            INSERT INTO equipment_advisory_actions(equipment_id,advisory_id,revision,context_digest,device_context,action)
+            VALUES(%s,%s,%s,%s,%s,%s)
+            ON CONFLICT(equipment_id,advisory_id,revision,context_digest)
+            DO UPDATE SET action=EXCLUDED.action,updated_at=CURRENT_TIMESTAMP
+        """,
+            (
+                equipment_id,
+                advisory_id,
+                revision,
+                notices["context_digest"],
+                Json(advisories.equipment_context(equipment)),
+                Json(action),
+            ),
+        )
+        return {"action": action, "context_digest": notices["context_digest"]}

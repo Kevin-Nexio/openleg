@@ -61,6 +61,7 @@ without code changes.
 | `operator_api_bp` | `operator_api.py` | `/api/operator/v1`, `/leg/community` |
 | `telemetry_bp` | `telemetry_routes.py` | `/api/telemetry/v1/communities/{community}/installations` |
 | `equipment_bp` | `equipment_routes.py` | `/dashboard/equipment`, `/api/equipment/v1/records` |
+| `advisory_bp` | `advisory_routes.py` | `/api/admin/advisories/v1`, `/dashboard/equipment/{id}/advisories` |
 
 ## Route map
 
@@ -167,6 +168,7 @@ domains move into `store/`, each resolving the seam through a lazy
 `import database as db; db.<fn>()` keeps working unchanged.
 
 Shipped stores: `store/access_token`, `store/analytics`, `store/api_client`,
+`store/advisories`,
 `store/billing`, `store/building`, `store/cluster`, `store/consent`,
 `store/correspondence`, `store/dashboard_profile`, `store/document`,
 `store/email_queue`, `store/equipment`, `store/formation_documents`, `store/meter`,

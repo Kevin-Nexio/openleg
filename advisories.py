@@ -275,6 +275,7 @@ def match_advisory(equipment, entry):
     ]
     result = {
         "classification": "possible",
+        "identity_matched": False,
         "reason": "missing_identity",
         "matched_model": models[0]["model"] if models else None,
         "firmware_rule": models[0]["firmware"] if models else None,
@@ -287,6 +288,7 @@ def match_advisory(equipment, entry):
         }
     if not vendor or not model_name:
         return result
+    result["identity_matched"] = True
     rule = models[0]["firmware"]
     firmware = equipment.get("firmware")
     if not firmware:
@@ -446,4 +448,107 @@ def catalog_health(policy, reviews, *, today=None):
         }
         if latest
         else None,
+    }
+
+
+def revision_state(entry_status, published, revision, latest_published=0):
+    if not published:
+        return "draft"
+    return "superseded" if revision < latest_published else entry_status
+
+
+def assess_catalog(
+    equipment, publications, actions, health, *, history_truncated=False
+):
+    context = equipment_context(equipment)
+    context_digest = content_digest(context)
+    latest = {}
+    for publication in publications:
+        advisory_id = publication["advisory_id"]
+        latest[advisory_id] = max(latest.get(advisory_id, 0), publication["revision"])
+    action_index = {
+        (action["advisory_id"], action["revision"], action["context_digest"]): action
+        for action in actions
+    }
+    assessments, history = [], []
+    for publication in publications:
+        advisory_id, revision = publication["advisory_id"], publication["revision"]
+        entry = publication["entry"]
+        match = match_advisory(equipment, entry)
+        if match["classification"] == "no_identity_match":
+            continue
+        state = revision_state(entry["status"], True, revision, latest[advisory_id])
+        source_covered = entry["source_url"] in health["source_urls"]
+        action = action_index.get((advisory_id, revision, context_digest))
+        item = {
+            "advisory_id": advisory_id,
+            "revision": revision,
+            "entry": entry,
+            "reviewed_on": publication["review"]["reviewed_on"],
+            "state": state,
+            "match": match,
+            "source_covered": source_covered,
+            "action_allowed": state == "active"
+            and health["status"] == "current"
+            and source_covered
+            and match["identity_matched"],
+            "action": action["action"] if action else None,
+        }
+        (history if state == "superseded" else assessments).append(item)
+    notices = [
+        item
+        for item in assessments
+        if item["action_allowed"]
+        and item["match"]["classification"] in ("affected", "possible")
+    ]
+    return {
+        "equipment": {"id": equipment["id"], **context},
+        "context_digest": context_digest,
+        "catalog": {**health, "published_count": len(latest)},
+        "assessments": assessments,
+        "notices": notices,
+        "history": history,
+        "history_truncated": history_truncated,
+        "past_actions": [
+            action
+            for action in actions
+            if action["context_digest"] != context_digest
+            or action["revision"] != latest.get(action["advisory_id"])
+        ],
+    }
+
+
+def validate_owner_action(payload, expected_context):
+    payload = _object(
+        payload,
+        ("context_digest", "acknowledged", "remedy_status", "evidence", "private_note"),
+        "action",
+    )
+    if payload.get("context_digest") != expected_context:
+        raise AdvisoryError("equipment_context_changed", 409)
+    acknowledged = payload.get("acknowledged", False)
+    if not isinstance(acknowledged, bool):
+        raise AdvisoryError(field="acknowledged")
+    status = _choice(
+        payload.get("remedy_status", "unknown"), REMEDY_STATUSES, "remedy_status"
+    )
+    evidence = _object(
+        payload.get("evidence", {}), ("kind", "reviewed_on", "source_url"), "evidence"
+    )
+    kind = _choice(evidence.get("kind", "unknown"), SOURCE_KINDS, "evidence.kind")
+    reviewed = _date(evidence.get("reviewed_on"), "evidence.reviewed_on", optional=True)
+    url = _url(evidence.get("source_url"), "evidence.source_url", optional=True)
+    if (
+        (kind == "unknown" and (reviewed or url))
+        or (kind != "unknown" and not reviewed)
+        or (status == "reported_done" and kind == "unknown")
+    ):
+        raise AdvisoryError(field="evidence")
+    return {
+        "acknowledged": acknowledged,
+        "remedy_status": status,
+        "evidence": {"kind": kind, "reviewed_on": reviewed, "source_url": url},
+        "private_note": _text(
+            payload.get("private_note"), 1000, "private_note", optional=True
+        ),
     }
