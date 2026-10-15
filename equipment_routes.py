@@ -3,7 +3,7 @@
 
 import hmac
 import json
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from flask import Blueprint, jsonify, redirect, request, session, url_for
 
@@ -113,7 +113,7 @@ def _render(template, **context):
         template,
         sources=equipment.SOURCE_LINKS,
         csrf_token=session.get("dashboard_csrf_token", ""),
-        today=datetime.now(timezone.utc).date().isoformat(),
+        today=datetime.now(UTC).date().isoformat(),
         equipment=equipment,
         **context,
     )

@@ -15,7 +15,7 @@ import sqlite3
 import stat
 import time
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from urllib.error import HTTPError, URLError
 from urllib.parse import urlsplit
@@ -236,7 +236,7 @@ class Collector:
             row = telemetry.observation(
                 row,
                 {**self.config["source"], "raw_retention_days": 1},
-                datetime.fromtimestamp(self.clock(), timezone.utc),
+                datetime.fromtimestamp(self.clock(), UTC),
             )
             row.pop("fingerprint")
             body = json.dumps(row, separators=(",", ":"))

@@ -2,7 +2,7 @@
 """Operational telemetry through authenticated HTTP and real PostgreSQL."""
 
 import json
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 import pytest
 
@@ -66,7 +66,7 @@ def sample(**overrides):
         "direction": "generation",
         "measurement_location": "pv_inverter",
         "quality": "measured",
-        "observed_at": datetime.now(timezone.utc).isoformat(),
+        "observed_at": datetime.now(UTC).isoformat(),
         **overrides,
     }
 
@@ -102,7 +102,7 @@ def test_owner_enrolment_and_private_ingestion(telemetry_client):
         for table in ("meter_readings", "metering_point_readings", "billing_periods"):
             cur.execute(f"SELECT COUNT(*) AS n FROM {table}")
             assert cur.fetchone()["n"] == 0
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     with pytest.raises(billing_readings.PeriodDataError, match="no_readings"):
         billing_readings.load_period_frames(
             "community-a", now - timedelta(hours=1), now
@@ -228,12 +228,8 @@ def test_membership_and_verification_are_checked_on_every_use(telemetry_client):
         {"measurement_location": "unknown"},
         {"quality": "validated"},
         {"observed_at": "2026-01-01T00:00:00"},
-        {
-            "observed_at": (
-                datetime.now(timezone.utc) + timedelta(minutes=10)
-            ).isoformat()
-        },
-        {"observed_at": (datetime.now(timezone.utc) - timedelta(days=8)).isoformat()},
+        {"observed_at": (datetime.now(UTC) + timedelta(minutes=10)).isoformat()},
+        {"observed_at": (datetime.now(UTC) - timedelta(days=8)).isoformat()},
         {"sequence": True},
         {"url": "http://device.local/command"},
         {"interval_start": "2026-01-01T00:00:00Z"},
@@ -279,7 +275,7 @@ def test_missing_stale_and_skewed_timestamps_never_use_receipt_for_freshness(
 ):
     client = telemetry_client
     installation, token = enroll(client)
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     values = [
         sample(observed_at=None),
         sample(
@@ -309,7 +305,7 @@ def test_missing_stale_and_skewed_timestamps_never_use_receipt_for_freshness(
 def test_counter_interval_and_power_stay_distinct(telemetry_client):
     client = telemetry_client
     installation, token = enroll(client)
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     values = [
         sample(),
         sample(
@@ -363,7 +359,7 @@ def test_replay_keeps_receipt_and_aggregate_and_survives_cleanup(telemetry_clien
             client,
             installation,
             token,
-            [{**original, "observed_at": datetime.now(timezone.utc).isoformat()}],
+            [{**original, "observed_at": datetime.now(UTC).isoformat()}],
         ).status_code
         == 409
     )
@@ -452,13 +448,7 @@ def test_shorter_retention_hides_and_deletes_old_data(telemetry_client):
             client,
             installation,
             token,
-            [
-                sample(
-                    observed_at=(
-                        datetime.now(timezone.utc) - timedelta(days=2)
-                    ).isoformat()
-                )
-            ],
+            [sample(observed_at=(datetime.now(UTC) - timedelta(days=2)).isoformat())],
         ).status_code
         == 201
     )

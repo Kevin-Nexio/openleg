@@ -30,7 +30,7 @@ as incomplete rather than silently summed.
 """
 
 import json
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from decimal import ROUND_HALF_UP, Decimal
 
 import billing_engine
@@ -108,8 +108,8 @@ def _require_text(value, message: str) -> str:
 
 def _as_utc(moment: datetime) -> datetime:
     if moment.tzinfo is None:
-        return moment.replace(tzinfo=timezone.utc)
-    return moment.astimezone(timezone.utc)
+        return moment.replace(tzinfo=UTC)
+    return moment.astimezone(UTC)
 
 
 def _period_bounds(provenance: dict) -> tuple[datetime, datetime]:

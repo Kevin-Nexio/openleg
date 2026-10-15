@@ -28,7 +28,7 @@ migrate that table forward.
 import os
 import secrets
 from contextlib import contextmanager
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 from urllib.parse import urlsplit, urlunsplit
 from zoneinfo import ZoneInfo
@@ -378,11 +378,11 @@ def test_create_tables_migrates_a_billing_periods_table_in_its_old_shape():
     ]
     assert row["community_id"] == "42", "the integer key becomes its own text"
     # Midnight in Zurich on 15 January is 23:00 UTC the day before.
-    assert row["period_start"] == datetime(2026, 1, 14, 23, 0, tzinfo=timezone.utc), (
+    assert row["period_start"] == datetime(2026, 1, 14, 23, 0, tzinfo=UTC), (
         "a naive timestamp is read as Europe/Zurich, not as UTC"
     )
     # Midnight in Zurich on 15 February is 23:00 UTC the day before.
-    assert row["period_end"] == datetime(2026, 2, 14, 23, 0, tzinfo=timezone.utc), (
+    assert row["period_end"] == datetime(2026, 2, 14, 23, 0, tzinfo=UTC), (
         "a naive timestamp is read as Europe/Zurich, not as UTC"
     )
 
@@ -415,8 +415,8 @@ def test_issued_invoice_snapshots_are_unique_per_participant_and_immutable():
                 ) RETURNING id
                 """,
                 (
-                    datetime(2026, 1, 1, tzinfo=timezone.utc),
-                    datetime(2026, 2, 1, tzinfo=timezone.utc),
+                    datetime(2026, 1, 1, tzinfo=UTC),
+                    datetime(2026, 2, 1, tzinfo=UTC),
                     "a" * 64,
                 ),
             )
@@ -545,7 +545,7 @@ def test_create_tables_migrates_legacy_invoices_issued_at_to_timestamptz():
 
     assert row is not None, "the migration must carry the existing row across"
     # A naive timestamp is already UTC: 09:30 stays 09:30, no one-hour shift.
-    assert row["issued_at"] == datetime(2026, 2, 5, 9, 30, tzinfo=timezone.utc), (
+    assert row["issued_at"] == datetime(2026, 2, 5, 9, 30, tzinfo=UTC), (
         "a naive timestamp is read as UTC, per the CONTEXT.md timestamp standard"
     )
 
@@ -689,8 +689,8 @@ def test_unassigned_period_points_are_scoped_by_public_vnb_leg_identifier():
 
     import database
 
-    start = datetime(2026, 1, 1, tzinfo=timezone.utc)
-    end = datetime(2026, 2, 1, tzinfo=timezone.utc)
+    start = datetime(2026, 1, 1, tzinfo=UTC)
+    end = datetime(2026, 2, 1, tzinfo=UTC)
     with _temporary_database() as url, _pool_against(url):
         with database.get_connection() as conn, conn.cursor() as cur:
             cur.execute(
@@ -817,8 +817,8 @@ def test_billing_tariffs_migration_keeps_legacy_rows_incomplete():
     import database
     from store.schema import create_tables
 
-    start = datetime(2026, 1, 1, tzinfo=timezone.utc)
-    end = datetime(2026, 2, 1, tzinfo=timezone.utc)
+    start = datetime(2026, 1, 1, tzinfo=UTC)
+    end = datetime(2026, 2, 1, tzinfo=UTC)
 
     with _temporary_database() as url, _pool_against(url):
         # Start from the complete current schema so unrelated tables and indexes
@@ -884,9 +884,9 @@ def test_get_billing_policy_fails_closed_across_a_policy_boundary_live():
     import database
     from store.schema import create_tables
 
-    january = datetime(2026, 1, 1, tzinfo=timezone.utc)
-    february = datetime(2026, 2, 1, tzinfo=timezone.utc)
-    mid_january = datetime(2026, 1, 15, tzinfo=timezone.utc)
+    january = datetime(2026, 1, 1, tzinfo=UTC)
+    february = datetime(2026, 2, 1, tzinfo=UTC)
+    mid_january = datetime(2026, 1, 15, tzinfo=UTC)
 
     with _temporary_database() as url, _pool_against(url):
         create_tables()
@@ -920,9 +920,9 @@ def test_get_billing_policy_fails_closed_on_newest_incomplete_version():
     import database
     from store.schema import create_tables
 
-    december = datetime(2025, 12, 1, tzinfo=timezone.utc)
-    january = datetime(2026, 1, 1, tzinfo=timezone.utc)
-    february = datetime(2026, 2, 1, tzinfo=timezone.utc)
+    december = datetime(2025, 12, 1, tzinfo=UTC)
+    january = datetime(2026, 1, 1, tzinfo=UTC)
+    february = datetime(2026, 2, 1, tzinfo=UTC)
 
     with _temporary_database() as url, _pool_against(url):
         create_tables()
@@ -974,11 +974,11 @@ def test_get_billing_policy_fails_closed_on_newest_expired_version():
     import database
     from store.schema import create_tables
 
-    december = datetime(2025, 12, 1, tzinfo=timezone.utc)
-    mid_december = datetime(2025, 12, 15, tzinfo=timezone.utc)
-    late_december = datetime(2025, 12, 20, tzinfo=timezone.utc)
-    january = datetime(2026, 1, 1, tzinfo=timezone.utc)
-    february = datetime(2026, 2, 1, tzinfo=timezone.utc)
+    december = datetime(2025, 12, 1, tzinfo=UTC)
+    mid_december = datetime(2025, 12, 15, tzinfo=UTC)
+    late_december = datetime(2025, 12, 20, tzinfo=UTC)
+    january = datetime(2026, 1, 1, tzinfo=UTC)
+    february = datetime(2026, 2, 1, tzinfo=UTC)
 
     with _temporary_database() as url, _pool_against(url):
         create_tables()
@@ -1063,7 +1063,7 @@ def test_billing_tariffs_check_constraints_are_installed_idempotently():
     import database
     from store.schema import create_tables
 
-    start = datetime(2026, 1, 1, tzinfo=timezone.utc)
+    start = datetime(2026, 1, 1, tzinfo=UTC)
 
     with _temporary_database() as url, _pool_against(url):
         create_tables()
@@ -1120,7 +1120,7 @@ def test_billing_tariffs_nullable_check_constraints_reject_invalid_values():
     import database
     from store.schema import create_tables
 
-    start = datetime(2026, 1, 1, tzinfo=timezone.utc)
+    start = datetime(2026, 1, 1, tzinfo=UTC)
 
     with _temporary_database() as url, _pool_against(url):
         create_tables()

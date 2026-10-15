@@ -5,7 +5,7 @@ import os
 import secrets
 import threading
 from contextlib import contextmanager
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 from urllib.parse import urlsplit, urlunsplit
 
@@ -18,7 +18,7 @@ import database
 import store.metering
 
 POINT = "CH000000000000000000000000000001"
-MEASURED_AT = datetime(2026, 1, 5, 23, 0, tzinfo=timezone.utc)
+MEASURED_AT = datetime(2026, 1, 5, 23, 0, tzinfo=UTC)
 
 METERING_SCHEMA = """
     CREATE TABLE metering_points (
@@ -216,9 +216,9 @@ def test_sdat_ledger_conflict_updates_audit_fields_without_replacing_identity():
     if not os.environ.get("DATABASE_URL"):
         pytest.skip("needs a live database")
 
-    created_at = datetime(2026, 1, 6, 1, 0, tzinfo=timezone.utc)
-    period_start = datetime(2026, 1, 1, tzinfo=timezone.utc)
-    period_end = datetime(2026, 1, 6, tzinfo=timezone.utc)
+    created_at = datetime(2026, 1, 6, 1, 0, tzinfo=UTC)
+    period_start = datetime(2026, 1, 1, tzinfo=UTC)
+    period_end = datetime(2026, 1, 6, tzinfo=UTC)
     original = {
         "document_id": "DOC-1",
         "doc_type": "E66",
@@ -280,8 +280,8 @@ def test_billable_period_snapshot_holds_under_concurrent_assignment(monkeypatch)
     vnb_community_id = "VNB-LEG-SNAP-1"
     assigned_point = "CH000000000000000000000000000001"
     unassigned_point = "CH000000000000000000000000000002"
-    period_start = datetime(2026, 1, 1, tzinfo=timezone.utc)
-    period_end = datetime(2026, 2, 1, tzinfo=timezone.utc)
+    period_start = datetime(2026, 1, 1, tzinfo=UTC)
+    period_end = datetime(2026, 2, 1, tzinfo=UTC)
 
     with _temporary_database() as url, _pool_against(url):
         _setup_schema()

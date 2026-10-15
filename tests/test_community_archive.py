@@ -3,7 +3,7 @@
 
 import io
 import json
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from decimal import Decimal
 from unittest.mock import MagicMock
 
@@ -113,7 +113,7 @@ def tagged_data():
             "community_id": "leg-1",
             "timezone": "Europe/Zurich",
             "grid_fee_rp_kwh": Decimal("123.45"),
-            "valid_from": datetime(2026, 3, 15, 12, 0, 0, tzinfo=timezone.utc),
+            "valid_from": datetime(2026, 3, 15, 12, 0, 0, tzinfo=UTC),
         }
     ]
     return data
@@ -281,5 +281,5 @@ def test_tagged_decimal_and_datetime_values_survive_round_trip():
     assert restored == {"valid": True, "errors": [], "conflicts": [], "restored": True}
     stored = target.restored["billing_tariffs"][0]
     assert stored["grid_fee_rp_kwh"] == Decimal("123.45")
-    assert stored["valid_from"] == datetime(2026, 3, 15, 12, 0, 0, tzinfo=timezone.utc)
+    assert stored["valid_from"] == datetime(2026, 3, 15, 12, 0, 0, tzinfo=UTC)
     assert reexported == archive

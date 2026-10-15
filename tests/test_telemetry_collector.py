@@ -3,7 +3,7 @@
 
 import json
 import os
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from threading import Event, Thread
 
@@ -284,7 +284,7 @@ def test_observation_age_cannot_block_newer_samples(tmp_path):
 
     def observed(age):
         return observation(
-            observed_at=datetime.fromtimestamp(now[0] - age, timezone.utc).isoformat()
+            observed_at=datetime.fromtimestamp(now[0] - age, UTC).isoformat()
         )
 
     try:

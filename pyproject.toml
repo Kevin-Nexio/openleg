@@ -12,7 +12,12 @@ markers = [
     "contract: pins a repository boundary or policy invariant",
 ]
 
+[tool.ruff]
+target-version = "py311"
+
 [tool.ruff.lint]
+# Ruff 0.17 removed these datetime checks from its defaults; retain them.
+extend-select = ["DTZ001", "DTZ005", "DTZ006", "DTZ007", "DTZ011", "DTZ012", "DTZ901"]
 # Broad catches are existing error boundaries; narrow them in focused slices.
 # Nested DB context managers are explicit and correct; flattening is style-only.
 ignore = ["BLE001", "SIM117"]
