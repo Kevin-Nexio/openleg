@@ -91,14 +91,14 @@
         </select>
         {% if form_errors.get('delivery_method') %}<p class="mt-1 text-sm text-accent" role="alert">{{ form_errors['delivery_method'] }}</p>{% endif %}
       </div>
-      <button type="submit" class="sm:col-span-2 bg-brand text-white px-6 py-3 rounded-lg font-semibold hover:bg-brand-dark focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand">Version speichern</button>
+      <button type="submit" class="sm:col-span-2 bg-brand text-white px-6 py-3 rounded-lg font-semibold hover:bg-brand-dark focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand">Version speichern</button>
     </form>
   </section>
 
   <section class="bg-white rounded-xl border p-6">
     <h2 class="font-bold mb-2">Bisherige Versionen</h2>
     {% if policy_versions %}
-    <div class="overflow-x-auto"><table class="w-full min-w-[42rem] text-sm">
+    <div class="overflow-x-auto"><table class="w-full min-w-2xl text-sm">
       <thead class="bg-slate-50">
         <tr>
           <th scope="col" class="px-3 py-2 text-left">Gültig ab</th>

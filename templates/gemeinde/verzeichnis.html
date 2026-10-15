@@ -29,7 +29,7 @@
             <form class="flex-1 flex gap-2" method="get">
                 <label for="verzeichnis-q" class="sr-only">Gemeinde suchen</label>
                 <input id="verzeichnis-q" type="text" name="q" value="{{ query }}" placeholder="Gemeinde suchen..."
-                    class="flex-1 border border-slate-200 rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand/30">
+                    class="flex-1 border border-slate-200 rounded-lg px-4 py-2 text-sm focus:outline-hidden focus:ring-2 focus:ring-brand/30">
                 <input type="hidden" name="kanton" value="{{ kanton }}">
                 <input type="hidden" name="sort" value="{{ sort }}">
                 <button type="submit" class="bg-brand text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-brand-dark">Suchen</button>
@@ -100,15 +100,15 @@
                             <span class="text-green-700" title="LEG-Ersparnis">CHF {{ "%.0f"|format(p.leg_value_gap_chf|float) }}</span>
                             {% endif %}
                             {% if p.display_score is not none %}
-                            <span class="bg-brand/10 text-brand font-bold px-2 py-1 rounded" title="Solarnutzung">
+                            <span class="bg-brand/10 text-brand font-bold px-2 py-1 rounded-sm" title="Solarnutzung">
                                 {{ "%.0f"|format(p.display_score|float) }}%
                             </span>
                             {% elif p.get('pv_score_pct') is not none %}
-                            <span class="bg-brand/10 text-brand font-bold px-2 py-1 rounded" title="Solarnutzung">
+                            <span class="bg-brand/10 text-brand font-bold px-2 py-1 rounded-sm" title="Solarnutzung">
                                 {{ "%.0f"|format([p.pv_score_pct|float, 100]|min) }}%
                             </span>
                             {% elif p.solar_potential_pct %}
-                            <span class="bg-brand/10 text-brand font-bold px-2 py-1 rounded" title="Solarnutzung">
+                            <span class="bg-brand/10 text-brand font-bold px-2 py-1 rounded-sm" title="Solarnutzung">
                                 {{ "%.0f"|format(p.solar_potential_pct|float) }}%
                             </span>
                             {% endif %}

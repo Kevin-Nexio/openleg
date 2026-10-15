@@ -80,9 +80,9 @@
       <table class="w-full text-sm border-collapse">
         <thead>
           <tr class="text-left text-xs uppercase tracking-wide text-ink-muted">
-            <th class="sticky left-0 z-10 bg-[#f6f4ef] w-12 min-w-[3rem] px-3 py-3 font-medium border-b border-slate-200">Rang</th>
-            <th class="sticky left-12 z-10 bg-[#f6f4ef] min-w-[9rem] px-3 py-3 font-medium border-b border-slate-200">Gemeinde</th>
-            <th class="sticky left-[12rem] z-10 bg-[#f6f4ef] min-w-[9rem] px-3 py-3 font-medium text-right border-b border-r border-slate-200">Solarnutzung</th>
+            <th class="sticky left-0 z-10 bg-[#f6f4ef] w-12 min-w-12 px-3 py-3 font-medium border-b border-slate-200">Rang</th>
+            <th class="sticky left-12 z-10 bg-[#f6f4ef] min-w-36 px-3 py-3 font-medium border-b border-slate-200">Gemeinde</th>
+            <th class="sticky left-48 z-10 bg-[#f6f4ef] min-w-36 px-3 py-3 font-medium text-right border-b border-r border-slate-200">Solarnutzung</th>
             <th class="px-3 py-3 font-medium border-b border-slate-200">Kanton</th>
             <th class="px-3 py-3 font-medium text-right border-b border-slate-200">Ungenutzt</th>
             <th class="px-3 py-3 font-medium border-b border-slate-200">Einordnung</th>
@@ -96,7 +96,7 @@
             <td class="sticky left-12 z-10 bg-white group-hover:bg-slate-50 px-3 py-3 font-medium">
               <a href="/gemeinde/profil/{{ r.bfs_number }}" class="hover:text-brand">{{ r.name }}</a>
             </td>
-            <td class="sticky left-[12rem] z-10 bg-white group-hover:bg-slate-50 px-3 py-3 border-r border-slate-200">
+            <td class="sticky left-48 z-10 bg-white group-hover:bg-slate-50 px-3 py-3 border-r border-slate-200">
               <div class="flex items-center justify-end gap-2">
                 <span class="font-mono tabular-nums font-semibold whitespace-nowrap">
                   {{ "%.1f"|format(r.display_score|float) }}%{% if r.score_over_100 %}<span class="text-[10px] text-ink-muted ml-0.5">+</span>{% endif %}
@@ -112,11 +112,11 @@
             </td>
             <td class="px-3 py-3">
               {% if r.recommendation == 'vorbild' %}
-              <span class="bg-green-100 text-green-700 text-xs px-2 py-1 rounded">Vorbild</span>
+              <span class="bg-green-100 text-green-700 text-xs px-2 py-1 rounded-sm">Vorbild</span>
               {% elif r.recommendation == 'grosse_chance' %}
-              <span class="bg-brand/10 text-brand-dark text-xs px-2 py-1 rounded">Grosse Chance</span>
+              <span class="bg-brand/10 text-brand-dark text-xs px-2 py-1 rounded-sm">Grosse Chance</span>
               {% else %}
-              <span class="bg-slate-100 text-slate-600 text-xs px-2 py-1 rounded">Auf Kurs</span>
+              <span class="bg-slate-100 text-slate-600 text-xs px-2 py-1 rounded-sm">Auf Kurs</span>
               {% endif %}
             </td>
           </tr>
