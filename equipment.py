@@ -170,10 +170,30 @@ def _source_url(value, field):
             or parsed.query
             or parsed.fragment
             or parsed.port not in (None, 443)
-            or not re.fullmatch(r"[a-zA-Z0-9](?:[a-zA-Z0-9.-]*[a-zA-Z0-9])?", host)
+            or len(host) > 253
+            or any(
+                not re.fullmatch(
+                    r"[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?", label
+                )
+                for label in host.split(".")
+            )
+            or not re.fullmatch(
+                r"(?:[a-zA-Z]{2,63}|xn--[a-zA-Z0-9-]{2,59})", host.rsplit(".", 1)[-1]
+            )
             or "." not in host
             or host.lower().endswith(
-                (".local", ".localhost", ".internal", ".test", ".invalid", ".example")
+                (
+                    ".local",
+                    ".localhost",
+                    ".internal",
+                    ".test",
+                    ".invalid",
+                    ".example",
+                    ".home.arpa",
+                    ".lan",
+                    ".home",
+                    ".corp",
+                )
             )
             or any(char.isspace() for char in value)
             or "\\" in value

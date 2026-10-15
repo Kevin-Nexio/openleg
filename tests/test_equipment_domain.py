@@ -23,6 +23,11 @@ pytestmark = pytest.mark.unit
         "https://example.com/path#PRIVATE",
         "https://www.bacs.admin.ch\\@evil.test/path",
         "https://device.internal/path",
+        "https://127.1/path",
+        "https://127.0x1/path",
+        "https://0x7f.0x1/path",
+        "https://router.home.arpa/path",
+        "https://docs..example.com/path",
     ],
 )
 def test_evidence_links_only_accept_public_https_document_urls(url):
