@@ -25,6 +25,9 @@
 <div class="max-w-4xl mx-auto px-4 py-8">
   <a href="/dashboard/equipment" class="text-sm font-semibold text-brand hover:underline">Zurück zu meinen Solargeräten</a>
   <h1 class="text-3xl font-bold mt-6">{{ 'Solargerät bearbeiten' if record_id else 'Solargerät erfassen' }}</h1>
+  {% if record_id %}
+  <a class="inline-block mt-4 text-brand font-semibold hover:underline" href="{{ url_for('advisories.owner_page', equipment_id=record_id) }}">Veröffentlichte Sicherheitshinweise für dieses Gerät prüfen</a>
+  {% endif %}
   <p class="text-ink-muted mt-2">Unbekannte Werte bleiben leer oder auf «Unbekannt». Quellen mit einer bekannten Herkunft brauchen ein Prüfdatum, das nicht in der Zukunft liegt.</p>
   <p class="text-sm text-ink-muted mt-3">OpenLEG prüft diese Angaben nicht. «Installateurnachweis» bezeichnet einen von Ihnen hinterlegten Nachweis.</p>
   {% if invalid_field %}

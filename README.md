@@ -39,6 +39,12 @@ Cloud-access reviews and backup evidence remain separate. Owners can download a
 redacted installer handoff. OpenLEG does not verify the entered claims or change
 devices.
 
+Equipment pages also show private matches against an explicitly reviewed
+advisory catalog. The catalog starts empty with notices disabled. A named source
+reviewer, review cadence and successful source review are required before
+enabling notices. Unknown firmware remains unresolved; no match is not a safety
+assessment. See [advisory review and owner notices](docs/advisories.md).
+
 Municipality profiles, the directory, and the municipality dashboard distinguish
 zero confirmed expressions of interest from temporarily unavailable counts. When
 counts cannot be loaded, interest sorting falls back to sorting by name. Public
@@ -160,6 +166,12 @@ und eine Checkliste für ihr Modell, auch ohne LEG-Mitgliedschaft oder Telemetri
 Cloud-Zugriffe und Ersatzstromnachweise bleiben getrennt. Eigentümer können eine
 bereinigte Übergabe für den Installateur herunterladen. OpenLEG prüft die Angaben
 nicht und verändert keine Geräte.
+
+Die Geräteseiten zeigen auch private Zuordnungen zu einem ausdrücklich geprüften
+Hinweiskatalog. Er beginnt leer und mit ausgeschalteten Hinweisen. Vor dem
+Einschalten braucht es eine benannte Quellenverantwortung, einen Prüfturnus und
+eine erfolgreiche Quellenprüfung. Unbekannte Firmware bleibt ungeklärt. Ein
+fehlender Treffer belegt nicht, dass die Anlage sicher ist. Siehe [Hinweiskatalog und Quellenprüfung](docs/advisories.md).
 
 Gemeindeprofile, Verzeichnis und Gemeinde-Dashboard unterscheiden null bestätigte
 Interessenmeldungen von vorübergehend nicht verfügbaren Zahlen. Können die Zahlen

@@ -20,6 +20,7 @@ _PRIVATE_PATH_PREFIXES = (
     "/api/operator/",
     "/api/telemetry/",
     "/api/equipment/",
+    "/api/admin/advisories/",
     "/dashboard/access/",
     "/dashboard/invoices",
     "/dashboard/contacts",

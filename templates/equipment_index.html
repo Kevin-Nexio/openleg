@@ -13,6 +13,7 @@
       <h2 class="text-xl font-bold">{{ record.manufacturer or 'Hersteller unbekannt' }} {{ record.model or 'Modell unbekannt' }}</h2>
       <p class="text-sm text-ink-muted mt-2">Firmware: {{ record.firmware or 'Unbekannt' }} · Quelle: {{ equipment.SOURCES[record.evidence.kind] }} · Prüfung: {{ record.evidence.reviewed_on or 'Unbekannt' }}</p>
       <a class="inline-block mt-4 font-semibold text-brand hover:underline" href="{{ url_for('equipment.edit', record_id=record.id) }}">Eintrag und Checkliste öffnen</a>
+      <a class="block mt-3 text-sm font-semibold text-brand hover:underline" href="{{ url_for('advisories.owner_page', equipment_id=record.id) }}">Sicherheitshinweise prüfen</a>
     </article>
     {% else %}
     <p class="rounded-xl border border-line bg-white p-6">Sie haben noch kein Gerät erfasst. Fehlende Angaben können unbekannt bleiben.</p>

@@ -393,6 +393,19 @@ list_operator_payment_matches = _operator_operations.list_payments
 respond_operator_invoice_case = _operator_operations.respond_case
 confirm_operator_payment_match = _operator_operations.confirm_payment
 
+from store.advisories import (  # noqa: F401
+    append_advisory_revision,
+    create_advisory,
+    get_advisory_history,
+    get_advisory_source_policy,
+    get_equipment_advisories,
+    list_advisory_catalog,
+    list_advisory_source_reviews,
+    publish_advisory_revision,
+    record_advisory_source_review,
+    record_equipment_advisory_action,
+    set_advisory_source_policy,
+)
 from store.equipment import (  # noqa: F401
     create_equipment,
     delete_equipment,
