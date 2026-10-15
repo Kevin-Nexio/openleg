@@ -64,6 +64,9 @@
       {% set interest = interest_summary if interest_summary is defined else {} %}
       <h2 id="interest-summary-title" class="text-lg font-semibold">Interesse an einer LEG</h2>
       <p class="text-sm text-ink-muted mt-1">Nur bestätigte Meldungen aus {{ municipality.name }}. Sie sehen keine Namen, Kontaktdaten oder Adressen.</p>
+      {% if interest is none %}
+      <p class="text-sm text-ink-muted mt-5" role="status">Interessenmeldungen sind derzeit nicht verfügbar. Bitte versuchen Sie es später erneut.</p>
+      {% else %}
       <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mt-5">
         <div><p class="font-mono text-2xl font-bold">{{ interest.verified_total|default(0, true) }}</p><p class="text-sm text-ink-muted">bestätigte Interessierte</p></div>
         <div><p class="font-mono text-2xl font-bold">{{ interest.last_30_days|default(0, true) }}</p><p class="text-sm text-ink-muted">in den letzten 30 Tagen</p></div>
@@ -74,6 +77,7 @@
       <div class="mt-5 flex flex-wrap gap-2" aria-label="Rollen der Interessierten">
         {% for role in interest_roles %}<span class="rounded-full bg-paper px-3 py-1 text-sm">{{ role.label }}: <span class="font-mono">{{ role.count }}</span></span>{% endfor %}
       </div>
+      {% endif %}
       {% endif %}
     </section>
 

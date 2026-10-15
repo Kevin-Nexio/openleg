@@ -47,7 +47,7 @@
                     <option value="energy_transition_score" {{ 'selected' if sort == 'energy_transition_score' }}>Energiewende-Score</option>
                     <option value="leg_value_gap_chf" {{ 'selected' if sort == 'leg_value_gap_chf' }}>LEG-Ersparnis</option>
                     <option value="population" {{ 'selected' if sort == 'population' }}>Einwohner</option>
-                    <option value="interest" {{ 'selected' if sort == 'interest' }}>Interessierte</option>
+                    <option value="interest" {{ 'selected' if sort == 'interest' }} {{ 'disabled' if not interest_available }}>Interessierte</option>
                     <option value="name" {{ 'selected' if sort == 'name' }}>Name</option>
                 </select>
             </div>
@@ -60,6 +60,10 @@
             }
             </script>
         </div>
+
+        {% if not interest_available %}
+        <p class="text-sm text-ink-muted mb-4" role="status">Interessenmeldungen sind derzeit nicht verfügbar. {% if sort == 'name' %}Die Gemeinden sind nach Namen sortiert.{% endif %}</p>
+        {% endif %}
 
         <!-- Results: dense grouped index, not a card grid -->
         {% if profiles %}
