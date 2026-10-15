@@ -17,6 +17,35 @@ count uses conditions identical to its list.
 Operational household telemetry has its own explicit sharing grants; neighbour
 consent and community administrator roles do not grant telemetry access.
 
+## store/equipment
+
+- Table: `equipment_records` (DDL in `store/equipment.py`).
+- Holds: owner `building_id`, record UUID, creation/update times and a private
+  JSON record. It contains manufacturer/model, firmware, logger, AC kW and
+  optional PV DC kWp, cloud dependency, installer-access state, optional serial,
+  named remote users, network details and private notes. Checklist, manual
+  vendor-cloud review and backup capability each retain separate evidence kind,
+  review date and optional public documentation URL.
+- Purpose: owner inventory and preparation of installation-specific tasks for
+  an installer. No scanning, telemetry ingestion or device-control commands.
+- Owner: the currently verified building owner. Neither LEG membership nor
+  telemetry enrollment is required. Every read, edit, download and deletion
+  checks the owner session against the current verified building record.
+- Sensitivity: private installation and access information. Neighbour consent,
+  community administrator status and telemetry grants confer no access.
+- Evidence: owner reports, device observations and owner-entered installer
+  evidence stay distinct. Known sources need a non-future review date.
+  OpenLEG does not verify these assertions. Manufacturer/model/firmware changes
+  reset the checklist, cloud review and backup assertions to unknown.
+- Handoff: an explicit owner action downloads allowlisted device facts,
+  findings, action states, dates and public source links. It excludes profile
+  data, serials, named remote users, network details and private notes. The
+  owner reviews the remaining device fields and links before sharing. Nothing
+  is emailed automatically. Responses use no-store and no-referrer headers.
+- Retention: until equipment or profile deletion; the JSON evidence lives in
+  the same row and the owner FK cascades on profile deletion. There is no
+  independent checklist history. Downloads are outside database deletion.
+
 ## store/telemetry
 
 - Tables: `telemetry_installations`, `telemetry_samples`,

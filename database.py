@@ -391,3 +391,11 @@ list_operator_invoice_cases = _operator_operations.list_cases
 list_operator_payment_matches = _operator_operations.list_payments
 respond_operator_invoice_case = _operator_operations.respond_case
 confirm_operator_payment_match = _operator_operations.confirm_payment
+
+from store.equipment import (  # noqa: F401
+    create_equipment,
+    delete_equipment,
+    get_equipment,
+    list_equipment,
+    update_equipment,
+)

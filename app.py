@@ -44,6 +44,7 @@ from admin import admin_bp, require_admin
 from api_public import public_api_bp
 from cron import cron_bp
 from email_utils import send_email
+from equipment_routes import equipment_bp
 from health import health_bp
 from leg_registry import registry_api_bp
 from municipality import municipality_bp, pilot_bp
@@ -992,6 +993,7 @@ def create_app(config=None, *, load_environment=True, check_database=True):
         cron_bp,
         operator_api_bp,
         telemetry_bp,
+        equipment_bp,
     ):
         application.register_blueprint(blueprint)
     tenant_module.init_tenant_middleware(application, db=db)

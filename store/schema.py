@@ -3,7 +3,7 @@
 
 import logging
 
-from store import contact_request, telemetry
+from store import contact_request, equipment, telemetry
 
 logger = logging.getLogger(__name__)
 
@@ -80,6 +80,7 @@ def create_tables():
             """)
 
             contact_request.create_tables(cur)
+            equipment.create_tables(cur)
 
             cur.execute("""
                 CREATE TABLE IF NOT EXISTS coverage_requests (

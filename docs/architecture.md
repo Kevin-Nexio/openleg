@@ -60,6 +60,7 @@ without code changes.
 | `self_host_bp` | `self_host.py` | `/self-host`, `/install.sh` |
 | `operator_api_bp` | `operator_api.py` | `/api/operator/v1`, `/leg/community` |
 | `telemetry_bp` | `telemetry_routes.py` | `/api/telemetry/v1/communities/{community}/installations` |
+| `equipment_bp` | `equipment_routes.py` | `/dashboard/equipment`, `/api/equipment/v1/records` |
 
 ## Route map
 
@@ -168,7 +169,7 @@ domains move into `store/`, each resolving the seam through a lazy
 Shipped stores: `store/access_token`, `store/analytics`, `store/api_client`,
 `store/billing`, `store/building`, `store/cluster`, `store/consent`,
 `store/correspondence`, `store/dashboard_profile`, `store/document`,
-`store/email_queue`, `store/formation_documents`, `store/meter`,
+`store/email_queue`, `store/equipment`, `store/formation_documents`, `store/meter`,
 `store/metering`, `store/municipality`, `store/ops`, `store/profile`,
 `store/ranking`, `store/referral`, `store/registry`, `store/sdat_ingestion`,
 `store/tenant`, `store/token`, `store/utility`.
