@@ -10,7 +10,7 @@ way in #271.
 """
 
 import logging
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from flask import Blueprint, abort, current_app, jsonify, request
 
@@ -171,7 +171,7 @@ def api_cron_verify_registry_entries():
 @cron_bp.route("/api/cron/invoice-query-reminders", methods=["POST"])
 def api_cron_invoice_query_reminders():
     _require_cron_secret()
-    due = invoice_query.due_invoice_query_reminders(datetime.now(timezone.utc))
+    due = invoice_query.due_invoice_query_reminders(datetime.now(UTC))
     reminded = 0
     for case in due:
         if invoice_query.mark_invoice_query_reminded(case["id"], "system"):

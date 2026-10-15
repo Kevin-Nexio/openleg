@@ -8,7 +8,7 @@ All functions are pure: fetch, parse, return dict. DB persistence handled by cal
 import csv
 import io
 import logging
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 import requests
 
@@ -409,7 +409,7 @@ def refresh_municipality(
         data_sources["energie_reporter"] = er_row is not None
     if sd_data is not None:
         data_sources["sonnendach"] = sd_row is not None
-    data_sources["last_refresh"] = datetime.now(timezone.utc).isoformat()
+    data_sources["last_refresh"] = datetime.now(UTC).isoformat()
     profile = {
         "bfs_number": bfs_number,
         "name": existing.get("name", "") if existing else "",

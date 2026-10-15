@@ -8,7 +8,7 @@ diagnostics therefore have one implementation.
 
 import hashlib
 import json
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from decimal import Decimal, InvalidOperation
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
@@ -145,7 +145,7 @@ def accept_delivery(payload, *, transport, evidence, repository=None):
                 diagnostics.append({"code": "invalid_interval"})
             record_problem = True
             continue
-        key = (moment.astimezone(timezone.utc), participant, direction)
+        key = (moment.astimezone(UTC), participant, direction)
         if key in seen:
             diagnostics.append({"code": "overlapping_interval"})
             record_problem = True
@@ -162,9 +162,7 @@ def accept_delivery(payload, *, transport, evidence, repository=None):
         )
 
     if start and end and local_zone and not record_problem:
-        expected_count = int(
-            (end.astimezone(timezone.utc) - start.astimezone(timezone.utc)) / RESOLUTION
-        )
+        expected_count = int((end.astimezone(UTC) - start.astimezone(UTC)) / RESOLUTION)
         series = {(row["participant_id"], row["direction"]) for row in normalized}
         expected_series = {
             (item["participant_id"], item["direction"])

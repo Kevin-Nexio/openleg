@@ -4,7 +4,7 @@
 import hashlib
 import json
 import re
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from decimal import Decimal, InvalidOperation
 
 VERSION = "telemetry/1"
@@ -85,10 +85,11 @@ def timestamp(value):
     if not isinstance(value, str) or len(value) > 40:
         raise TelemetryError()
     try:
-        parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
+        # Preserve rejection of Z as a date/time separator, even on Python 3.11.
+        parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))  # noqa: FURB162
         if parsed.tzinfo is None:
             raise ValueError()
-        return parsed.astimezone(timezone.utc)
+        return parsed.astimezone(UTC)
     except (ValueError, OverflowError):
         raise TelemetryError() from None
 

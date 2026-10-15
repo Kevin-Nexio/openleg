@@ -20,7 +20,7 @@ Gebäude, dieses pro Messpunkt.
 import logging
 import re
 import xml.etree.ElementTree as ET
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from decimal import Decimal, InvalidOperation
 
 from defusedxml.common import DefusedXmlException
@@ -105,10 +105,11 @@ def _utc(value):
     """ISO 8601 mit Z in ein zeitzonenbewusstes UTC-datetime umwandeln."""
     if not value:
         return None
-    parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
+    # Preserve rejection of Z as a date/time separator, even on Python 3.11.
+    parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))  # noqa: FURB162
     if parsed.tzinfo is None:
-        parsed = parsed.replace(tzinfo=timezone.utc)
-    return parsed.astimezone(timezone.utc)
+        parsed = parsed.replace(tzinfo=UTC)
+    return parsed.astimezone(UTC)
 
 
 def mask_point_id(metering_point_id) -> str:

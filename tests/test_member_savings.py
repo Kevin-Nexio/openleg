@@ -10,7 +10,7 @@ indistinguishable from a missing one, and their metered numbers are never
 read at all.
 """
 
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 from pathlib import Path
 from unittest.mock import MagicMock
@@ -83,7 +83,7 @@ def _reading(offset_minutes, total="0.500", community="0.250", direction="consum
     return {
         "metering_point_id": POINT,
         "direction": direction,
-        "measured_at": datetime(2026, 6, 30, 22, 0, tzinfo=timezone.utc)
+        "measured_at": datetime(2026, 6, 30, 22, 0, tzinfo=UTC)
         + timedelta(minutes=offset_minutes),
         "resolution_minutes": 15,
         "total_kwh": Decimal(total),
