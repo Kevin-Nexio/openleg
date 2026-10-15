@@ -28,7 +28,7 @@
   <p class="text-ink-muted mt-2">Unbekannte Werte bleiben leer oder auf «Unbekannt». Quellen mit einer bekannten Herkunft brauchen ein Prüfdatum, das nicht in der Zukunft liegt.</p>
   <p class="text-sm text-ink-muted mt-3">OpenLEG prüft diese Angaben nicht. «Installateurnachweis» bezeichnet einen von Ihnen hinterlegten Nachweis.</p>
   {% if invalid_field %}
-  <div class="mt-4 p-4 border border-line rounded-lg bg-white" role="alert">Bitte prüfen Sie das Feld <strong>{{ invalid_field }}</strong>. Erledigte Aufgaben brauchen eine anwendbare Modellfunktion und eine datierte Quelle. Quellenlinks müssen öffentliche HTTPS-Adressen ohne Zugangsdaten, Suchparameter oder Fragmente sein.</div>
+  <div class="mt-4 p-4 border border-line rounded-lg bg-white" role="alert">Bitte prüfen Sie Ihre Angaben. Erledigte Aufgaben brauchen eine anwendbare Modellfunktion und eine datierte Quelle. Quellenlinks müssen öffentliche HTTPS-Adressen ohne Zugangsdaten, Suchparameter oder Fragmente sein.</div>
   {% endif %}
   <form method="post" class="grid gap-6 mt-6">
     <input type="hidden" name="csrf_token" value="{{ csrf_token }}">

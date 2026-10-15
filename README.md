@@ -33,6 +33,12 @@ The current code covers formation records, VNB handovers, participant changes, s
 | Municipality | `/gemeinde/dashboard` | Open the municipality dashboard. |
 | Developer or self-hoster | `/api/v1/docs` | Use the API or run your own instance. |
 
+Verified owners can keep private solar equipment records and a checklist for
+their model at `/dashboard/equipment`, without LEG membership or telemetry.
+Cloud-access reviews and backup evidence remain separate. Owners can download a
+redacted installer handoff. OpenLEG does not verify the entered claims or change
+devices.
+
 ### From meter reading to invoice
 
 The path from raw metering data to a member invoice runs as one workflow in this repository:
@@ -143,6 +149,12 @@ Der aktuelle Code deckt Gründungsunterlagen, VNB-Übergaben, Teilnehmeränderun
 | LEG-Betreiber | `/leg/dashboard` | Mitglieder, Verträge, Messung und Abrechnung verwalten. |
 | Gemeinde | `/gemeinde/dashboard` | Gemeinde-Dashboard öffnen. |
 | Entwickler oder Selbsthoster | `/api/v1/docs` | API nutzen oder eigene Instanz betreiben. |
+
+Bestätigte Eigentümer erfassen unter `/dashboard/equipment` private Solargeräte
+und eine Checkliste für ihr Modell, auch ohne LEG-Mitgliedschaft oder Telemetrie.
+Cloud-Zugriffe und Ersatzstromnachweise bleiben getrennt. Eigentümer können eine
+bereinigte Übergabe für den Installateur herunterladen. OpenLEG prüft die Angaben
+nicht und verändert keine Geräte.
 
 ### Vom Zählerwert zur Rechnung
 

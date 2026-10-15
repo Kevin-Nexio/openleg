@@ -5,7 +5,7 @@ import uuid
 
 from psycopg2.extras import Json
 
-from equipment import MAX_RECORDS, EquipmentError, validate_record
+from equipment import MAX_RECORDS, EquipmentError, reset_model_evidence, validate_record
 
 
 def _get_connection():
@@ -95,14 +95,7 @@ def update_equipment(actor, record_id, payload):
         previous = cur.fetchone()
         if not previous:
             raise EquipmentError("record_not_found", 404)
-        context = ("manufacturer", "model", "firmware")
-        old = previous["record"]
-        if any(old[key] for key in context) and any(
-            old[key] != record[key] for key in context
-        ):
-            unknown = validate_record({})
-            for key in ("checklist", "vendor_cloud_review", "backup"):
-                record[key] = unknown[key]
+        record = reset_model_evidence(previous["record"], record)
         cur.execute(
             "UPDATE equipment_records SET record=%s,updated_at=CURRENT_TIMESTAMP WHERE id=%s AND owner_building_id=%s RETURNING id,record",
             (Json(record), record_id, actor),

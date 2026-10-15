@@ -27,6 +27,7 @@ pytestmark = pytest.mark.unit
         "https://127.0x1/path",
         "https://0x7f.0x1/path",
         "https://router.home.arpa/path",
+        "https://home.arpa/path",
         "https://docs..example.com/path",
     ],
 )

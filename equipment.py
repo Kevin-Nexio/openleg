@@ -181,6 +181,7 @@ def _source_url(value, field):
                 r"(?:[a-zA-Z]{2,63}|xn--[a-zA-Z0-9-]{2,59})", host.rsplit(".", 1)[-1]
             )
             or "." not in host
+            or host.lower() == "home.arpa"
             or host.lower().endswith(
                 (
                     ".local",
@@ -332,6 +333,23 @@ def validate_record(payload):
         ),
         "installer_evidence": installer_evidence,
     }
+    return record
+
+
+def reset_model_evidence(previous, record):
+    """Invalidate model-specific assertions when their device context changes."""
+    context = ("manufacturer", "model", "firmware")
+    if any(previous[key] for key in context) and any(
+        previous[key] != record[key] for key in context
+    ):
+        unknown = validate_record({})
+        return {
+            **record,
+            **{
+                key: unknown[key]
+                for key in ("checklist", "vendor_cloud_review", "backup")
+            },
+        }
     return record
 
 
