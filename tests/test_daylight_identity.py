@@ -49,9 +49,7 @@ def test_config_defines_daylight_tokens():
 def test_config_has_no_legacy_neon_tokens():
     config = _read(SOURCE_CSS).lower()
     offenders = [t for t in LEGACY_NEON if t in config]
-    assert not offenders, (
-        f"tailwind.css still carries legacy neon tokens: {offenders}"
-    )
+    assert not offenders, f"tailwind.css still carries legacy neon tokens: {offenders}"
 
 
 def test_built_css_is_rebuilt_with_pine():
