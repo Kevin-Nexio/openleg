@@ -8,7 +8,7 @@ the admin routes.
 """
 
 import re
-from datetime import date, datetime, timedelta
+from datetime import UTC, date, datetime, timedelta
 from decimal import Decimal
 from zoneinfo import ZoneInfo
 
@@ -1717,6 +1717,69 @@ def test_describe_version_shows_populated_payment_days_and_prefix():
     assert described["payment_days_display"] == "30 Tage"
     assert described["invoice_prefix_display"] == "LEG-2026"
     assert described["settlement_fee_display"] == "2.00 Rp./kWh"
+
+
+def test_describe_version_renders_the_complete_display_record():
+    """The persisted version's display record is rendered by operators and
+    templates; every field must come from the stored values."""
+    version = {
+        "effective_from": datetime(2026, 1, 1, 12, 0, tzinfo=UTC),
+        "internal_price_chf_per_kwh": Decimal("0.15"),
+        "grid_fee_chf_per_kwh": Decimal("0.08"),
+        "settlement_fee_chf_per_kwh": Decimal("0.02"),
+        "network_level": "same",
+        "distribution_model": "proportional",
+        "vat_mode": "standard",
+        "vat_rate_pct": Decimal("8.1"),
+        "payment_days": 30,
+        "invoice_prefix": "LEG-2026",
+        "delivery_method": "email",
+    }
+    described = billing_policy.describe_version(version)
+
+    assert described == {
+        **version,
+        "effective_from_display": "2026-01-01",
+        "internal_price_display": "15.00 Rp./kWh",
+        "grid_fee_display": "8.00 Rp./kWh",
+        "settlement_fee_display": "2.00 Rp./kWh",
+        "network_level_label": "Gleiche Netzebene",
+        "distribution_model_label": "Proportional",
+        "vat_label": "Mehrwertsteuer ausweisen",
+        "delivery_method_label": "E-Mail",
+        "payment_days_display": "30 Tage",
+        "invoice_prefix_display": "LEG-2026",
+    }
+
+
+def test_describe_version_falls_back_to_nicht_angegeben_display():
+    version = {
+        "effective_from": None,
+        "vat_rate_pct": Decimal(0),
+    }
+    described = billing_policy.describe_version(version)
+
+    assert described == {
+        "effective_from": None,
+        "vat_rate_pct": Decimal(0),
+        "effective_from_display": "None",
+        "internal_price_display": "Nicht angegeben",
+        "grid_fee_display": "Nicht angegeben",
+        "settlement_fee_display": "Nicht angegeben",
+        "network_level_label": "Nicht angegeben",
+        "distribution_model_label": "Nicht angegeben",
+        "vat_label": "Nicht angegeben",
+        "delivery_method_label": "Nicht angegeben",
+        "payment_days_display": "Nicht angegeben",
+        "invoice_prefix_display": "Nicht angegeben",
+    }
+
+
+def test_rate_rp_text_formats_stored_prices_and_degrades_to_display_fallback():
+    assert billing_policy.rate_rp_text(Decimal("0.15")) == "15.00 Rp./kWh"
+    assert billing_policy.rate_rp_text("nan") == "Nicht angegeben"
+    assert billing_policy.rate_rp_text(None) == "Nicht angegeben"
+    assert billing_policy.rate_rp_text(0) == "0.00 Rp./kWh"
 
 
 def test_policy_template_uses_display_values_for_payment_days_and_prefix():
