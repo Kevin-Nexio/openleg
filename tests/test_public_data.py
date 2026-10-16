@@ -163,6 +163,111 @@ class TestComputeValueGap:
         assert result["annual_savings_chf"] == 106.88
 
 
+class TestValueGapGuards:
+    def test_the_zero_gap_result_carries_the_three_zero_keys(self):
+        from public_data import compute_leg_value_gap
+
+        result = compute_leg_value_gap({"grid_rp_kwh": -1, "total_rp_kwh": 27.5})
+
+        assert result == {
+            "annual_savings_chf": 0,
+            "monthly_savings_chf": 0,
+            "savings_pct": 0,
+        }
+
+    def test_a_tariff_without_a_total_is_zero_gap(self):
+        from public_data import compute_leg_value_gap
+
+        assert compute_leg_value_gap({"grid_rp_kwh": 9.5}) == {
+            "annual_savings_chf": 0,
+            "monthly_savings_chf": 0,
+            "savings_pct": 0,
+        }
+
+    def test_a_tariff_without_a_grid_fee_is_zero_gap(self):
+        from public_data import compute_leg_value_gap
+
+        assert compute_leg_value_gap({"total_rp_kwh": 27.5}) == {
+            "annual_savings_chf": 0,
+            "monthly_savings_chf": 0,
+            "savings_pct": 0,
+        }
+
+
+class TestValueGapNumbers:
+    def test_the_full_breakdown_uses_the_default_forty_percent_reduction(self):
+        from public_data import compute_leg_value_gap
+
+        result = compute_leg_value_gap({"grid_rp_kwh": 9.55, "total_rp_kwh": 27.57})
+
+        assert result == {
+            "grid_fee_rp_kwh": 9.55,
+            "savings_rp_kwh": 3.82,
+            "annual_savings_chf": 171.9,
+            "monthly_savings_chf": 14.33,
+            "savings_pct": 13.9,
+            "grid_reduction_pct": 40.0,
+            "assumed_consumption_kwh": 4500,
+        }
+
+
+class TestTransitionScoreGuards:
+    def test_a_profile_without_consumption_keeps_no_production_ratio(self):
+        from public_data import compute_energy_transition_score
+
+        assert compute_energy_transition_score({"renewable_production_mwh": 50}) == 0.0
+
+    def test_a_profile_without_production_keeps_no_production_ratio(self):
+        from public_data import compute_energy_transition_score
+
+        assert (
+            compute_energy_transition_score({"electricity_consumption_mwh": 100}) == 0.0
+        )
+
+    def test_an_empty_consumption_value_is_not_a_consumption_of_one(self):
+        from public_data import compute_energy_transition_score
+
+        assert (
+            compute_energy_transition_score(
+                {"renewable_production_mwh": 10, "electricity_consumption_mwh": ""}
+            )
+            == 0.0
+        )
+
+
+class TestTransitionScoreBounds:
+    @pytest.mark.parametrize(
+        ("field", "value", "expected"),
+        [
+            ("solar_potential_pct", 101, 30.0),
+            ("ev_share_pct", 31, 20.0),
+            ("renewable_heating_pct", 101, 25.0),
+        ],
+    )
+    def test_component_shares_clip_to_their_maximum(self, field, value, expected):
+        from public_data import compute_energy_transition_score
+
+        profile = {"electricity_consumption_mwh": 100, "renewable_production_mwh": 0}
+        profile[field] = value
+
+        assert compute_energy_transition_score(profile) == expected
+
+
+class TestParseDecimal:
+    def test_a_binding_without_a_value_counts_as_zero(self):
+        from public_data import _parse_decimal
+
+        assert _parse_decimal({"type": "literal"}) == 0.0
+
+    def test_a_non_finite_and_unparseable_value_reads_as_none(self):
+        from public_data import _parse_decimal
+
+        assert _parse_decimal({"value": "abc"}) is None
+        assert _parse_decimal(None) is None
+        assert _parse_decimal({"type": "typed"}) == 0.0
+        assert _parse_decimal({"value": "27.5"}) == 27.5
+
+
 class TestComputeTransitionScore:
     """Test energy transition score computation."""
 
