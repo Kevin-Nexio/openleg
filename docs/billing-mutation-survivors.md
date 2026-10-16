@@ -24,6 +24,53 @@ normalization and by checking that logs name every unknown list value. One
 direction survivor remains: it changes only the separator between those logged
 values.
 
+## Fresh classification for #676 (native run at `1bc638f`)
+
+The runner battery path (`_battery_lines`), the public fingerprint's VNB
+evidence fields, and the database-backed run path in `run_billing_period`
+grew after the September waves and held 42 unclassified survivors. Behavior
+tests in `tests/test_billing_runner.py` kill all of them:
+
+- `_battery_lines` #2 and `run_billing_period` #52: the community battery
+  read is pinned to the billed community
+  (`test_battery_read_is_scoped_to_the_billed_community`,
+  `test_operational_billing_stamps_the_recorded_vnb_evidence`).
+- `_battery_lines` #6 and #7 are new equivalents: they rename the
+  `community_id` key of the dict handed to `validate_battery_config`, but
+  `db.get_battery` only returns the row whose `community_id` equals the
+  queried community, so the reinforcement key can never change the validated
+  result.
+- `_battery_lines` #15: a battery participant row preceding a billed
+  participant must not stop the scan
+  (`test_a_battery_participant_row_never_hides_later_cost_shares`).
+- `_battery_lines` #22-#24: the incomplete-configuration diagnostic is pinned
+  word for word.
+- `_battery_lines` #50-#56: the auditable snapshot field set, community,
+  participant, and capacity are pinned in
+  `test_battery_cost_share_lines_enter_the_draft_and_snapshot`.
+- `_fingerprint` #51, #52, #54, #55: the VNB case id and source change the
+  public fingerprint (`test_vnb_evidence_fields_change_the_public_run_fingerprint`);
+  dropping or nulling either field collapses two different evidence sets onto
+  one fingerprint.
+- `run_billing_period` #23-#29: the validated calculated-values read is pinned
+  to the community and period, and a run without evidence fails with the exact
+  message.
+- `run_billing_period` #36: the missing-evidence diagnostic is pinned word
+  for word.
+- `run_billing_period` #39-#43: the fetched evidence must be the one stamped
+  into the frames.
+- `run_billing_period` #204, #211, #213, #219-#225: the draft freezes the
+  stamped evidence fingerprint and the prepared-by actor
+  (`prepared_by` defaults to `"system"`).
+- `previous_complete_month` #26 remains the documented equivalent above.
+
+## Store metering classification for #680 (native run at `1bc638f`)
+
+`get_sdat_veracity_flags` #6 and `record_sdat_veracity_flags` #31 mutated the
+error diagnostics to `logger.error(None)`. The degrade-to-empty and
+swallow-error tests now pin both messages, killing both mutants. The nine
+SQL-casing equivalents from the #484 classification are unchanged.
+
 Six of the other survivors are the unassigned-period behavior gaps tracked in
 #435. The remaining ten were classified during #382 and do not change
 application or PostgreSQL behavior.
