@@ -118,3 +118,37 @@ unquoted identifiers and treats keywords case-insensitively.
 Malformed SQL, invalid placeholders, changed parameters and defaults, removed
 query clauses, changed reconciliation behavior, and suppressed log messages are
 not classified as equivalent. The behavior tests kill those mutants.
+
+## Policy form and display classification for #675 (native run at `a4c1f35`)
+
+`billing_policy.py` held 71 survivors at the wave-3 baseline after the display
+record was pinned. This wave's behavior tests in
+`tests/test_billing_policy.py` kill 61 of them; ten are classified with
+reachability probes (`/tmp` probe scripts confirmed the exact formats):
+
+Killed through the form's own seam:
+
+- every refused field names its exact German diagnostic; the two VAT
+  branches, the nested fiscal-value messages and both payment-day sentence
+  fragments are pinned word for word;
+- the price upper boundary (1000 Rp./kWh) stays valid, one rate period above
+  and a fifth decimal place are refused;
+- VAT rates 0, `1e1`, `NaN`, 101, 100.01 and 0.001 are refused; 0.01, 1 and
+  100 stay valid — this kills every `_vat_rate` domain mutant whose gate the
+  pattern-masked `NaN` case alone could not reach;
+- payment days accept both boundaries;
+- `suggest_price_band` accepts a zero feed-in floor (killing the `<= 0` and
+  `< 1` mutants) and refuses negative inputs, and its displays render two
+  decimal places;
+- `validate_persisted_policy` accepts a settlement fee exactly at its ceiling;
+- a present-but-empty and a non-string VAT field read as empty.
+
+Intentional equivalents:
+
+| Mutant | Mutation | Why behavior is unchanged |
+| --- | --- | --- |
+| `_field` #3, #5 | Default a missing form key to `None` or drop the default. | `_field` normalizes every non-string to `""` through `isinstance`, so a `None` default reaches the parser exactly like the `""` default. |
+| `_persisted_decimal` #5, #6 | Return `Decimal("nan")` or `Decimal("NAN")`. | Python's Decimal parser folds all three spellings to the same quiet, non-finite NaN; only `is_finite()` reads it. |
+| `suggest_price_band` #35, #40, #46, #51 | Drop the `"f"` format spec or use `"F"`. | For every quantized plain decimal reachable as a floor or ceiling, `format(x)`, `format(x, "f")` and `format(x, "F")` produce identical text. |
+| `validate_persisted_policy` #99 | Set `effective = None` in the type-fallback branch. | The flag is only read through `not effective`, which treats `None` and `False` alike. |
+| `policy_fingerprint_values` #17 | Replace `value = value.isoformat()` with `None`. | `effective_from` is excluded from `FINGERPRINT_POLICY_FIELDS`, and every remaining projected field is explicitly stringified or a non-temporal value, so the temporal branch is unreachable. |
