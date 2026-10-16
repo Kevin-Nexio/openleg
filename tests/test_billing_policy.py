@@ -1775,6 +1775,17 @@ def test_describe_version_falls_back_to_nicht_angegeben_display():
     }
 
 
+def test_describe_version_displays_a_legacy_string_effective_date_verbatim():
+    """A persisted row predating the date migration carries a plain string
+    date; the display must show it as stored, not as a None placeholder."""
+    described = billing_policy.describe_version(
+        {"effective_from": "2026-03-01", "network_level": "same"}
+    )
+
+    assert described["effective_from_display"] == "2026-03-01"
+    assert described["network_level_label"] == "Gleiche Netzebene"
+
+
 def test_rate_rp_text_formats_stored_prices_and_degrades_to_display_fallback():
     assert billing_policy.rate_rp_text(Decimal("0.15")) == "15.00 Rp./kWh"
     assert billing_policy.rate_rp_text("nan") == "Nicht angegeben"
