@@ -689,7 +689,7 @@ def test_jitter_coordinates_normalizes_geographic_boundaries():
         )
 
 
-def test_jitter_coordinates_pole_ajacent_points_stay_valid_latitudes():
+def test_jitter_coordinates_pole_adjacent_points_stay_valid_latitudes():
     """The clamp is part of the result contract: even beside the poles, where
     the anonymity radius spans more latitude degrees, the point stays a valid
     coordinate and never escapes the +-90 degree bounds."""

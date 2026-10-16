@@ -66,7 +66,7 @@ fifteen survivors are killed by behavior tests in
   hide the real neighbour.
 - `jitter_coordinates` #62 and #67: the latitude clamp is observable at
   pole-adjacent latitudes, where the 120 m radius spans more degrees;
-  `test_jitter_coordinates_pole_ajacent_points_stay_valid_latitudes` pins the
+  `test_jitter_coordinates_pole_adjacent_points_stay_valid_latitudes` pins the
   result to valid latitudes on both sides of the pole with fixed seeds.
 - `collect_building_locations` #3:
   `test_collect_building_locations_passes_the_requested_municipality_to_the_read`
