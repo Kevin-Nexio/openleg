@@ -19,6 +19,11 @@ _SD_HEADER = (
     "BFS_NR;dachflaeche_total_m2;dachflaeche_geeignet_m2;"
     "potenzial_kwh_jahr;potenzial_kwp;auslastung_pct\n"
 )
+_SD_HEADER_CANONICAL = _SD_HEADER.strip("\n")
+_SD_DATA_COLUMNS = (
+    "dachflaeche_total_m2;dachflaeche_geeignet_m2;"
+    "potenzial_kwh_jahr;potenzial_kwp;auslastung_pct"
+)
 
 
 def _metadata_response():
@@ -538,6 +543,30 @@ class TestBulkFetcherRecords:
             }
         ]
 
+    def test_an_english_sonnendach_row_yields_the_same_record(self, monkeypatch):
+        get = MagicMock(
+            side_effect=[
+                _metadata_response(),
+                _csv_response(
+                    "bfs_nr;total_roof_area_m2;suitable_roof_area_m2;"
+                    "potential_kwh_year;potential_kwp;utilization_pct\n"
+                    "295;90000.0;70000.0;5000000.5;500.0;14.1\n"
+                ),
+            ]
+        )
+        monkeypatch.setattr(public_data.requests, "get", get)
+
+        assert public_data.fetch_sonnendach_municipal() == [
+            {
+                "bfs_number": 295,
+                "total_roof_area_m2": 90000.0,
+                "suitable_roof_area_m2": 70000.0,
+                "potential_kwh_year": 5000000.5,
+                "potential_kwp": 500.0,
+                "utilization_pct": 14.1,
+            }
+        ]
+
     def test_missing_sonnendach_fields_read_as_none(self, monkeypatch):
         get = MagicMock(
             side_effect=[_metadata_response(), _csv_response(_SD_HEADER + "261\n")]
@@ -594,7 +623,7 @@ class TestBulkFetcherRecords:
         get = MagicMock(
             side_effect=[
                 _metadata_response(),
-                _csv_response(header + "295;Horgen;1;2;3;4;5;ZH\n"),
+                _csv_response(header + ";1;2;3;4;5\n" + "295;Horgen;1;2;3;4;5;ZH\n"),
             ]
         )
         monkeypatch.setattr(public_data.requests, "get", get)
@@ -611,6 +640,68 @@ class TestBulkFetcherRecords:
                 "renewable_production_mwh": 5.0,
             }
         ]
+
+    @pytest.mark.parametrize(
+        "bfs_column",
+        ["BFS_NR", "bfs_nr", "gemeinde_bfs"],
+    )
+    def test_every_bfs_column_alias_is_read_for_sonnendach(
+        self, monkeypatch, bfs_column
+    ):
+        get = MagicMock(
+            side_effect=[
+                _metadata_response(),
+                _csv_response(
+                    f"{bfs_column};{_SD_DATA_COLUMNS}\n"
+                    ";70000.0;70000.0;5000000.5;500.0;14.1\n"
+                    "295;90000.0;70000.0;5000000.5;500.0;14.1\n"
+                ),
+            ]
+        )
+        monkeypatch.setattr(public_data.requests, "get", get)
+
+        assert public_data.fetch_sonnendach_municipal() == [
+            {
+                "bfs_number": 295,
+                "total_roof_area_m2": 90000.0,
+                "suitable_roof_area_m2": 70000.0,
+                "potential_kwh_year": 5000000.5,
+                "potential_kwp": 500.0,
+                "utilization_pct": 14.1,
+            }
+        ]
+
+    @pytest.mark.parametrize(
+        ("fetcher", "message"),
+        [
+            (
+                public_data.fetch_energie_reporter,
+                "[PUBLIC_DATA] Energie Reporter CSV schema is incompatible",
+            ),
+            (
+                public_data.fetch_sonnendach_municipal,
+                "[PUBLIC_DATA] Sonnendach CSV schema is incompatible",
+            ),
+        ],
+    )
+    def test_an_incompatible_csv_names_the_exact_upstream_diagnostics(
+        self, monkeypatch, caplog, fetcher, message
+    ):
+        get = MagicMock(
+            side_effect=[
+                _metadata_response(),
+                _csv_response("upstream-secret-column;OTHER\n1;2\n"),
+            ]
+        )
+        monkeypatch.setattr(public_data.requests, "get", get)
+
+        with caplog.at_level(logging.ERROR):
+            assert fetcher() is None
+
+        assert any(item.getMessage() == message for item in caplog.records), (
+            caplog.messages
+        )
+        assert "upstream-secret-column" not in caplog.text
 
 
 class TestBulkFetcherFailureLogs:
