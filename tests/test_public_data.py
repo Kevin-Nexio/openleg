@@ -3,6 +3,7 @@
 
 import csv
 import logging
+from typing import ClassVar
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -257,7 +258,7 @@ class TestParseDecimal:
     def test_a_binding_without_a_value_counts_as_zero(self):
         from public_data import _parse_decimal
 
-        assert _parse_decimal({"type": "literal"}) == 0.0
+        assert _parse_decimal({"type": "typed"}) == 0.0
 
     def test_a_non_finite_and_unparseable_value_reads_as_none(self):
         from public_data import _parse_decimal
@@ -266,6 +267,411 @@ class TestParseDecimal:
         assert _parse_decimal(None) is None
         assert _parse_decimal({"type": "typed"}) == 0.0
         assert _parse_decimal({"value": "27.5"}) == 27.5
+
+
+class TestElComQuery:
+    _RESULT: ClassVar = {
+        "bfs_number": 261,
+        "year": 2026,
+        "operator_name": "EKZ",
+        "category": "H4",
+        "total_rp_kwh": 27.5,
+        "energy_rp_kwh": 12.0,
+        "grid_rp_kwh": 9.5,
+        "municipality_fee_rp_kwh": 0.6,
+        "kev_rp_kwh": 0.5,
+    }
+
+    def test_the_lindas_query_and_one_tariff_record_are_pinned(self):
+        from public_data import fetch_elcom_tariffs
+
+        response = MagicMock()
+        response.json.return_value = {
+            "results": {
+                "bindings": [
+                    {
+                        "operator": {"value": "EKZ"},
+                        "category": {"value": "H4"},
+                        "total": {"value": "27.5"},
+                        "energy": {"value": "12.0"},
+                        "grid": {"value": "9.5"},
+                        "municipality_fee": {"value": "0.6"},
+                        "kev": {"value": "0.5"},
+                    }
+                ]
+            }
+        }
+        post = MagicMock(return_value=response)
+        with patch("public_data.requests.post", post):
+            result = fetch_elcom_tariffs(261, 2026)
+
+        assert result == [self._RESULT]
+        post.assert_called_once()
+        _, kwargs = post.call_args
+        assert kwargs["headers"] == {"Accept": "application/sparql-results+json"}
+        assert kwargs["timeout"] == 30
+        sparql = kwargs["data"]["query"]
+        assert "elcom:municipality <https://ld.admin.ch/municipality/261> ;" in sparql
+        assert 'elcom:period "2026"^^' in sparql
+        assert "kwargs" not in sparql
+
+    def test_the_record_year_defaults_to_the_tariff_year(self):
+        from public_data import fetch_elcom_tariffs
+
+        response = MagicMock()
+        response.json.return_value = {"results": {"bindings": []}}
+        post = MagicMock(return_value=response)
+        with patch("public_data.requests.post", post):
+            result = fetch_elcom_tariffs(261)
+
+        assert result == []
+        sparql = post.call_args.kwargs["data"]["query"]
+        assert 'elcom:period "2026"^^' in sparql
+
+    def test_missing_results_read_as_an_empty_tariff_list(self):
+        from public_data import fetch_elcom_tariffs
+
+        response = MagicMock()
+        response.json.return_value = {"no_results": True}
+        post = MagicMock(return_value=response)
+        with patch("public_data.requests.post", post):
+            assert fetch_elcom_tariffs(261, 2026) == []
+
+    def test_bindless_records_read_the_public_separator_values(self):
+        from public_data import fetch_elcom_tariffs
+
+        response = MagicMock()
+        response.json.return_value = {
+            "results": {
+                "bindings": [
+                    {
+                        "operator": {"value": "EKZ"},
+                        "total": {"value": "27.5"},
+                    }
+                ]
+            }
+        }
+        post = MagicMock(return_value=response)
+        with patch("public_data.requests.post", post):
+            result = fetch_elcom_tariffs(261, 2026)
+
+        assert result == [
+            {
+                "bfs_number": 261,
+                "year": 2026,
+                "operator_name": "EKZ",
+                "category": "",
+                "total_rp_kwh": 27.5,
+                "energy_rp_kwh": None,
+                "grid_rp_kwh": None,
+                "municipality_fee_rp_kwh": None,
+                "kev_rp_kwh": None,
+            }
+        ]
+
+    def test_konfiguring_a_binding_without_an_operator_degrades_to_values(self):
+        from public_data import fetch_elcom_tariffs
+
+        response = MagicMock()
+        response.json.return_value = {
+            "results": {"bindings": [{"total": {"value": "27.5"}}]}
+        }
+        post = MagicMock(return_value=response)
+        with patch("public_data.requests.post", post):
+            result = fetch_elcom_tariffs(261, 2026)
+
+        assert result[0]["operator_name"] == ""
+
+
+class TestBulkFetcherWiring:
+    @pytest.mark.parametrize(
+        ("fetcher", "metadata_url"),
+        [
+            (public_data.fetch_energie_reporter, public_data.ENERGIE_REPORTER_URL),
+            (public_data.fetch_sonnendach_municipal, public_data.SONNENDACH_URL),
+        ],
+    )
+    def test_the_metadata_and_resource_calls_are_pinned(
+        self, monkeypatch, fetcher, metadata_url
+    ):
+        get = MagicMock(side_effect=[_metadata_response(), _csv_response(_ER_HEADER)])
+        monkeypatch.setattr(public_data.requests, "get", get)
+
+        fetcher()
+
+        assert get.call_args_list[0].args == (metadata_url,)
+        assert get.call_args_list[0].kwargs == {"timeout": 15}
+        assert get.call_args_list[1].args == (
+            "https://data.example/municipalities.csv",
+        )
+        assert get.call_args_list[1].kwargs == {"timeout": 30}
+
+
+class TestBulkFetcherRecords:
+    def test_a_german_energie_reporter_row_yields_the_exact_record(self, monkeypatch):
+        csv_response = _csv_response(
+            _ER_HEADER + "261;Rüti (ZH);47.5;12.0;55.5;3200.50;2800.25;ZH\n"
+        )
+        get = MagicMock(side_effect=[_metadata_response(), csv_response])
+        monkeypatch.setattr(public_data.requests, "get", get)
+
+        assert public_data.fetch_energie_reporter() == [
+            {
+                "bfs_number": 261,
+                "name": "Rüti (ZH)",
+                "kanton": "ZH",
+                "solar_potential_pct": 47.5,
+                "ev_share_pct": 12.0,
+                "renewable_heating_pct": 55.5,
+                "electricity_consumption_mwh": 3200.5,
+                "renewable_production_mwh": 2800.25,
+            }
+        ]
+        assert get.call_args_list[1].args == (
+            "https://data.example/municipalities.csv",
+        )
+        assert get.call_args_list[1].kwargs == {"timeout": 30}
+
+    def test_the_text_decoding_falls_back_to_utf_8(self, monkeypatch):
+        csv_response = _csv_response(_ER_HEADER + "261;München\n")
+        csv_response.apparent_encoding = None
+        monkeypatch.setattr(
+            public_data.requests,
+            "get",
+            MagicMock(side_effect=[_metadata_response(), csv_response]),
+        )
+
+        public_data.fetch_energie_reporter()
+
+        assert csv_response.encoding == "utf-8"
+
+    def test_a_resource_without_a_format_entry_is_not_a_csv_candidate(
+        self, monkeypatch, caplog
+    ):
+        metadata = MagicMock()
+        metadata.json.return_value = {
+            "result": {
+                "resources": [
+                    {
+                        "name": "Gemeindedaten",
+                        "url": "https://data.example/municipalities.csv",
+                    },
+                ]
+            }
+        }
+        get = MagicMock(side_effect=[metadata])
+        monkeypatch.setattr(public_data.requests, "get", get)
+
+        with caplog.at_level(logging.WARNING):
+            assert public_data.fetch_energie_reporter() is None
+
+        assert "no CSV resource found" in caplog.text
+
+    def test_an_english_energie_reporter_row_yields_the_same_record(self, monkeypatch):
+        get = MagicMock(
+            side_effect=[
+                _metadata_response(),
+                _csv_response(
+                    "bfs_nr;name;kanton;solar_potential_pct;ev_share_pct;"
+                    "renewable_heating_pct;electricity_consumption_mwh;"
+                    "renewable_production_mwh\n"
+                    "261;Rüti (ZH);ZH;47.5;12.0;55.5;3200.50;2800.25\n"
+                ),
+            ]
+        )
+        monkeypatch.setattr(public_data.requests, "get", get)
+
+        assert public_data.fetch_energie_reporter() == [
+            {
+                "bfs_number": 261,
+                "name": "Rüti (ZH)",
+                "kanton": "ZH",
+                "solar_potential_pct": 47.5,
+                "ev_share_pct": 12.0,
+                "renewable_heating_pct": 55.5,
+                "electricity_consumption_mwh": 3200.5,
+                "renewable_production_mwh": 2800.25,
+            }
+        ]
+
+    def test_missing_energie_reporter_fields_read_as_none(self, monkeypatch):
+        get = MagicMock(
+            side_effect=[
+                _metadata_response(),
+                _csv_response(_ER_HEADER + "261;Rüti (ZH)\n"),
+            ]
+        )
+        monkeypatch.setattr(public_data.requests, "get", get)
+
+        assert public_data.fetch_energie_reporter() == [
+            {
+                "bfs_number": 261,
+                "name": "Rüti (ZH)",
+                "kanton": "",
+                "solar_potential_pct": None,
+                "ev_share_pct": None,
+                "renewable_heating_pct": None,
+                "electricity_consumption_mwh": None,
+                "renewable_production_mwh": None,
+            }
+        ]
+
+    def test_a_german_sonnendach_row_yields_the_exact_record(self, monkeypatch):
+        get = MagicMock(
+            side_effect=[
+                _metadata_response(),
+                _csv_response(
+                    _SD_HEADER + "261;90000.0;70000.0;5000000.5;500.0;14.1\n"
+                ),
+            ]
+        )
+        monkeypatch.setattr(public_data.requests, "get", get)
+
+        assert public_data.fetch_sonnendach_municipal() == [
+            {
+                "bfs_number": 261,
+                "total_roof_area_m2": 90000.0,
+                "suitable_roof_area_m2": 70000.0,
+                "potential_kwh_year": 5000000.5,
+                "potential_kwp": 500.0,
+                "utilization_pct": 14.1,
+            }
+        ]
+
+    def test_missing_sonnendach_fields_read_as_none(self, monkeypatch):
+        get = MagicMock(
+            side_effect=[_metadata_response(), _csv_response(_SD_HEADER + "261\n")]
+        )
+        monkeypatch.setattr(public_data.requests, "get", get)
+
+        assert public_data.fetch_sonnendach_municipal() == [
+            {
+                "bfs_number": 261,
+                "total_roof_area_m2": None,
+                "suitable_roof_area_m2": None,
+                "potential_kwh_year": None,
+                "potential_kwp": None,
+                "utilization_pct": None,
+            }
+        ]
+
+    def test_the_municipal_sonnendach_resource_is_preferred_by_name(self, monkeypatch):
+        """Alle CSV-Ressourcen im Paket: die gemeinde-spezifische Datei gewinnt."""
+        metadata = MagicMock()
+        metadata.json.return_value = {
+            "result": {
+                "resources": [
+                    {
+                        "format": "CSV",
+                        "name": "Gebäudedaten",
+                        "url": "https://data.example/buildings.csv",
+                    },
+                    {
+                        "format": "CSV",
+                        "name": "Gemeindedaten der Kantone",
+                        "url": "https://data.example/municipalities.csv",
+                    },
+                ]
+            }
+        }
+        get = MagicMock(side_effect=[metadata, _csv_response(_SD_HEADER + "261\n")])
+        monkeypatch.setattr(public_data.requests, "get", get)
+
+        public_data.fetch_sonnendach_municipal()
+        assert get.call_args_list[1].args == (
+            "https://data.example/municipalities.csv",
+        )
+
+    @pytest.mark.parametrize(
+        "bfs_column",
+        ["BFS_NR", "bfs_nr", "gemeinde_bfs"],
+    )
+    def test_every_bfs_column_alias_is_read(self, monkeypatch, bfs_column):
+        header = (
+            f"{bfs_column};GEMEINDENAME;anteil_dachflaechen_solar;anteil_ev;"
+            "anteil_erneuerbar_heizen;stromverbrauch_mwh;erneuerbare_produktion_mwh;KANTON\n"
+        )
+        get = MagicMock(
+            side_effect=[
+                _metadata_response(),
+                _csv_response(header + "295;Horgen;1;2;3;4;5;ZH\n"),
+            ]
+        )
+        monkeypatch.setattr(public_data.requests, "get", get)
+
+        assert public_data.fetch_energie_reporter() == [
+            {
+                "bfs_number": 295,
+                "name": "Horgen",
+                "kanton": "ZH",
+                "solar_potential_pct": 1.0,
+                "ev_share_pct": 2.0,
+                "renewable_heating_pct": 3.0,
+                "electricity_consumption_mwh": 4.0,
+                "renewable_production_mwh": 5.0,
+            }
+        ]
+
+
+class TestBulkFetcherFailureLogs:
+    @pytest.mark.parametrize(
+        ("fetcher", "missing"),
+        [
+            (public_data.fetch_energie_reporter, "resources"),
+            (public_data.fetch_energie_reporter, "result"),
+            (public_data.fetch_sonnendach_municipal, "resources"),
+            (public_data.fetch_sonnendach_municipal, "result"),
+        ],
+    )
+    def test_a_package_without_resources_degrades_to_the_no_csv_warning(
+        self, monkeypatch, caplog, fetcher, missing
+    ):
+        metadata = MagicMock()
+        payload = {"result": {"resources": []}}
+        if missing == "result":
+            payload = {"other": True}
+        elif missing == "resources":
+            payload["result"] = {}
+        metadata.json.return_value = payload
+        get = MagicMock(side_effect=[metadata, RuntimeError("never reached")])
+        monkeypatch.setattr(public_data.requests, "get", get)
+
+        with caplog.at_level(logging.WARNING):
+            assert fetcher() is None
+
+        assert "no CSV resource found" in caplog.text
+        assert "fetch failed" not in caplog.text
+
+    @pytest.mark.parametrize(
+        ("fetcher", "url"),
+        [
+            (public_data.fetch_energie_reporter, public_data.ENERGIE_REPORTER_URL),
+            (public_data.fetch_sonnendach_municipal, public_data.SONNENDACH_URL),
+        ],
+    )
+    def test_an_upstream_failure_reports_the_exact_operator_error(
+        self, monkeypatch, caplog, fetcher, url
+    ):
+        def fail(_url, **_kwargs):
+            raise RuntimeError("upstream down")
+
+        monkeypatch.setattr(public_data.requests, "get", fail)
+
+        with caplog.at_level(logging.ERROR):
+            assert fetcher() is None
+
+        assert "upstream down" not in caplog.text
+        expected = {
+            public_data.fetch_energie_reporter: (
+                "[PUBLIC_DATA] Energie Reporter fetch failed"
+            ),
+            public_data.fetch_sonnendach_municipal: (
+                "[PUBLIC_DATA] Sonnendach fetch failed"
+            ),
+        }
+        assert any(message == expected[fetcher] for message in caplog.messages), (
+            caplog.messages
+        )
 
 
 class TestComputeTransitionScore:
