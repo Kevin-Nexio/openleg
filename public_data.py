@@ -110,23 +110,6 @@ def fetch_elcom_tariffs(bfs_number: int, year: int = 2026) -> list[dict] | None:
         return None
 
 
-def fetch_all_elcom_tariffs(
-    kanton: str = "ZH", year: int = 2026, bfs_numbers: list[int] | None = None
-) -> list[dict]:
-    """Batch fetch ElCom tariffs for multiple municipalities."""
-    if bfs_numbers is None:
-        bfs_numbers = ZH_BFS_NUMBERS
-    all_tariffs = []
-    for bfs in bfs_numbers:
-        tariffs = fetch_elcom_tariffs(bfs, year)
-        if tariffs:
-            all_tariffs.extend(tariffs)
-    logger.info(
-        f"[PUBLIC_DATA] Batch ElCom: {len(all_tariffs)} total records for {len(bfs_numbers)} municipalities"
-    )
-    return all_tariffs
-
-
 def _parse_decimal(binding_value):
     """Parse SPARQL decimal binding to float."""
     if not binding_value:
