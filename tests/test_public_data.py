@@ -19,7 +19,6 @@ _SD_HEADER = (
     "BFS_NR;dachflaeche_total_m2;dachflaeche_geeignet_m2;"
     "potenzial_kwh_jahr;potenzial_kwp;auslastung_pct\n"
 )
-_SD_HEADER_CANONICAL = _SD_HEADER.strip("\n")
 _SD_DATA_COLUMNS = (
     "dachflaeche_total_m2;dachflaeche_geeignet_m2;"
     "potenzial_kwh_jahr;potenzial_kwp;auslastung_pct"
@@ -374,7 +373,7 @@ class TestElComQuery:
             }
         ]
 
-    def test_konfiguring_a_binding_without_an_operator_degrades_to_values(self):
+    def test_configuring_a_binding_without_an_operator_degrades_to_values(self):
         from public_data import fetch_elcom_tariffs
 
         response = MagicMock()

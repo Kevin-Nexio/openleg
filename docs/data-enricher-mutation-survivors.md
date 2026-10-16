@@ -21,11 +21,13 @@ python -m mutmut results
 
 The scope's strict score moved from 69.45 to 75.99 percent. Every one of the
 360 previously uncovered mutants of data_enricher is now covered, and 372 of
-the 395 previously unscored or surviving mutants are killed. The 23 remaining
-survivors are classified below. None of them changes a pinned public
-outcome; they are recorded here instead of hidden or excluded. The 13
-uncovered mutants left in the scope belong to `public_data` and are outside
-this wave's tickets.
+the 395 previously unscored or surviving mutants are killed. The survivors
+then remaining (23 of them) are recorded below, reclassified wave by wave:
+the fresh classification sits in "Fresh kills for #677" and the equivalence
+tables carry the mutants that still survive at HEAD. None of them changes a
+pinned public outcome; they are recorded here instead of hidden or excluded.
+The 13 uncovered mutants left in the scope at that time belonged to
+`public_data` and were outside this wave's tickets.
 
 ## Intentional equivalents
 
@@ -83,8 +85,8 @@ normalization argument.
 
 Native mutmut 3.7.0 reference run at `a4c1f35` from an empty cache scores the
 module at 875 mutants with 759 killed and 116 survived. This wave's behavior
-tests in `tests/test_conversion_paths.py` kill 106 of the 116, leaving the ten
-equivalents above:
+tests in `tests/test_conversion_paths.py` kill 104 of the 116, leaving the
+twelve equivalents above:
 
 - `get_municipality_from_coords`: the geoadmin identify query is pinned field
   by field, including URL and timeout; sparse answers degrade silently and
@@ -104,7 +106,10 @@ equivalents above:
   PLZ and their values; a service building's consumption is derived from its
   energy surface; both the no-municipality and completion diagnostics are
   pinned exactly.
-- `get_mock_energy_profile_for_address`: the completion diagnostic is pinned.
+- `get_mock_energy_profile_for_address`: the completion diagnostic is pinned
+  exactly, and the seeded reference-address draws keep pinning the
+  `randint(4000, 20001)` and `randint(0, 31)` boundary shifts the first wave
+  killed.
 - `_plz_in_ranges`: inclusive PLZ boundaries at 1000, 9999 and inside a
   custom range.
 - `_get_mock_address_suggestions`: the offline suggestion shape is pinned.

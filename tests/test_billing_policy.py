@@ -848,6 +848,14 @@ def test_the_upper_price_boundary_stays_valid(field, boundary_value):
     assert result["errors"] == {}
 
 
+def test_a_price_at_four_places_stays_valid():
+    """A price with exactly four decimal places is the densest valid rate."""
+    result = billing_policy.validate_policy_form(_form(internal_price_rp="8.1234"))
+
+    assert result["errors"] == {}
+    assert result["policy"]["internal_price_chf_per_kwh"] == Decimal("0.081234")
+
+
 def test_a_price_above_the_boundary_or_beyond_four_places_is_refused():
     over_limit = billing_policy.validate_policy_form(_form(grid_fee_rp="1000.01"))[
         "errors"
