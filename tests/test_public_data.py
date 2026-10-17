@@ -240,6 +240,61 @@ class TestTransitionScoreGuards:
         )
 
 
+class TestTransitionScoreRatioBounds:
+    def test_a_doubled_production_ratio_caps_at_one(self):
+        from public_data import compute_energy_transition_score
+
+        score = compute_energy_transition_score(
+            {"electricity_consumption_mwh": 100, "renewable_production_mwh": 200}
+        )
+
+        assert score == 25.0, (
+            "the production ratio contributes its capped quarter at most"
+        )
+
+    def test_a_single_megawatt_hour_consumption_still_uses_the_ratio(self):
+        from public_data import compute_energy_transition_score
+
+        score = compute_energy_transition_score(
+            {"electricity_consumption_mwh": 1, "renewable_production_mwh": 1}
+        )
+
+        assert score == 25.0, "consumption of one counts, not zero"
+
+
+class TestValueGapMoneyBounds:
+    def test_a_single_rappen_grid_fee_stills_bills_a_full_breakdown(self):
+        from public_data import compute_leg_value_gap
+
+        result = compute_leg_value_gap({"grid_rp_kwh": 1.0, "total_rp_kwh": 27.5})
+
+        assert result == {
+            "grid_fee_rp_kwh": 1.0,
+            "savings_rp_kwh": 0.4,
+            "annual_savings_chf": 18.0,
+            "monthly_savings_chf": 1.5,
+            "savings_pct": 1.5,
+            "grid_reduction_pct": 40.0,
+            "assumed_consumption_kwh": 4500,
+        }
+
+    def test_third_decimal_grid_fee_is_reported_to_two_places(self):
+        from public_data import compute_leg_value_gap
+
+        result = compute_leg_value_gap({"grid_rp_kwh": 9.555, "total_rp_kwh": 27.57})
+
+        assert result["savings_rp_kwh"] == 3.82
+        assert result["grid_fee_rp_kwh"] == 9.55
+        assert result["annual_savings_chf"] == 171.99
+
+    def test_a_half_rappen_total_still_shares_the_savings(self):
+        from public_data import compute_leg_value_gap
+
+        result = compute_leg_value_gap({"grid_rp_kwh": 9.5, "total_rp_kwh": 0.5})
+
+        assert result["savings_pct"] == 760.0
+
+
 class TestTransitionScoreBounds:
     @pytest.mark.parametrize(
         ("field", "value", "expected"),
@@ -412,6 +467,153 @@ class TestBulkFetcherWiring:
 
 
 class TestBulkFetcherRecords:
+    def test_the_municipal_resource_names_are_pinned_per_token(self, monkeypatch):
+        """Exactly one token identifies the municipal resource: gemeinde,
+        municipal or kommun — the preference must use the named one, not a
+        hand-waved substring."""
+        token_names = {
+            "gemeinde": "Gemeindedaten der Kantone",
+            "municipal": "Municipal roof data",
+            "kommun": "Dachauswertung für Kommunen",
+        }
+        for token, name in token_names.items():
+            metadata = MagicMock()
+            metadata.json.return_value = {
+                "result": {
+                    "resources": [
+                        {
+                            "format": "CSV",
+                            "name": "Gebäudedaten",
+                            "url": "https://data.example/buildings.csv",
+                        },
+                        {
+                            "format": "CSV",
+                            "name": name,
+                            "url": "https://data.example/municipalities.csv",
+                        },
+                    ]
+                }
+            }
+            get = MagicMock(side_effect=[metadata, _csv_response(_SD_HEADER + "295\n")])
+            monkeypatch.setattr(public_data.requests, "get", get)
+
+            public_data.fetch_sonnendach_municipal()
+            assert get.call_args_list[1].args == (
+                "https://data.example/municipalities.csv",
+            ), f"the {token} resource must be preferred over the first CSV"
+
+    def test_the_sonnendach_decode_falls_back_to_utf_8(self, monkeypatch):
+        csv_response = _csv_response(_SD_HEADER + "295;München\n")
+        csv_response.apparent_encoding = None
+        monkeypatch.setattr(
+            public_data.requests,
+            "get",
+            MagicMock(side_effect=[_metadata_response(), csv_response]),
+        )
+
+        public_data.fetch_sonnendach_municipal()
+
+        assert csv_response.encoding == "utf-8"
+
+    def test_a_sonnendach_resource_without_a_format_falls_back_to_any_csv(
+        self, monkeypatch, caplog
+    ):
+        metadata = MagicMock()
+        metadata.json.return_value = {
+            "result": {
+                "resources": [
+                    {
+                        "name": "Gemeindedaten",
+                        "url": "https://data.example/municipalities.csv",
+                    },
+                    {
+                        "format": "CSV",
+                        "name": "Gebäude",
+                        "url": "https://data.example/buildings.csv",
+                    },
+                ]
+            }
+        }
+        get = MagicMock(side_effect=[metadata, _csv_response(_SD_HEADER + "295\n")])
+        monkeypatch.setattr(public_data.requests, "get", get)
+
+        with caplog.at_level(logging.WARNING):
+            assert public_data.fetch_sonnendach_municipal() == [
+                {
+                    "bfs_number": 295,
+                    "total_roof_area_m2": None,
+                    "suitable_roof_area_m2": None,
+                    "potential_kwh_year": None,
+                    "potential_kwp": None,
+                    "utilization_pct": None,
+                }
+            ]
+
+        assert "municipalities.csv" not in caplog.text
+
+    def test_the_bulk_fetchers_log_the_exact_parsed_counts(self, monkeypatch, caplog):
+        for fetcher, header, expected in (
+            (
+                public_data.fetch_energie_reporter,
+                _ER_HEADER + "261\n",
+                "[PUBLIC_DATA] Energie Reporter: 1 municipalities parsed",
+            ),
+            (
+                public_data.fetch_sonnendach_municipal,
+                _SD_HEADER + "261\n",
+                "[PUBLIC_DATA] Sonnendach: 1 municipalities parsed",
+            ),
+        ):
+            get = MagicMock(side_effect=[_metadata_response(), _csv_response(header)])
+            monkeypatch.setattr(public_data.requests, "get", get)
+            caplog.clear()
+
+            with caplog.at_level(logging.INFO):
+                fetcher()
+
+            assert any(item.getMessage() == expected for item in caplog.records), (
+                caplog.messages
+            )
+
+    def test_a_energie_reporter_row_without_a_name_reads_empty(self, monkeypatch):
+        get = MagicMock(
+            side_effect=[
+                _metadata_response(),
+                _csv_response(_ER_HEADER + "265\n"),
+            ]
+        )
+        monkeypatch.setattr(public_data.requests, "get", get)
+
+        assert public_data.fetch_energie_reporter() == [
+            {
+                "bfs_number": 265,
+                "name": "",
+                "kanton": "",
+                "solar_potential_pct": None,
+                "ev_share_pct": None,
+                "renewable_heating_pct": None,
+                "electricity_consumption_mwh": None,
+                "renewable_production_mwh": None,
+            }
+        ]
+
+    def test_the_energie_reporter_name_aliases_are_all_read(self, monkeypatch):
+        for name_column in ("GEMEINDENAME", "gemeindename", "name"):
+            header = (
+                f"BFS_NR;{name_column};anteil_dachflaechen_solar;anteil_ev;"
+                "anteil_erneuerbar_heizen;stromverbrauch_mwh;erneuerbare_produktion_mwh;KANTON\n"
+            )
+            get = MagicMock(
+                side_effect=[
+                    _metadata_response(),
+                    _csv_response(header + "295;Horgen;1;2;3;4;5;ZH\n"),
+                ]
+            )
+            monkeypatch.setattr(public_data.requests, "get", get)
+
+            result = public_data.fetch_energie_reporter()
+            assert result is not None and result[0]["name"] == "Horgen", name_column
+
     def test_a_german_energie_reporter_row_yields_the_exact_record(self, monkeypatch):
         csv_response = _csv_response(
             _ER_HEADER + "261;Rüti (ZH);47.5;12.0;55.5;3200.50;2800.25;ZH\n"
@@ -729,7 +931,17 @@ class TestBulkFetcherFailureLogs:
         with caplog.at_level(logging.WARNING):
             assert fetcher() is None
 
-        assert "no CSV resource found" in caplog.text
+        expected_warning = {
+            public_data.fetch_energie_reporter: (
+                "[PUBLIC_DATA] Energie Reporter: no CSV resource found"
+            ),
+            public_data.fetch_sonnendach_municipal: (
+                "[PUBLIC_DATA] Sonnendach: no CSV resource found"
+            ),
+        }
+        assert [item.getMessage() for item in caplog.records] == [
+            expected_warning[fetcher]
+        ], caplog.messages
         assert "fetch failed" not in caplog.text
 
     @pytest.mark.parametrize(
@@ -762,6 +974,36 @@ class TestBulkFetcherFailureLogs:
         assert any(message == expected[fetcher] for message in caplog.messages), (
             caplog.messages
         )
+
+    def test_the_elcom_success_and_failure_lines_name_their_numbers(self, caplog):
+        from public_data import fetch_elcom_tariffs
+
+        response = MagicMock()
+        response.json.return_value = {"results": {"bindings": []}}
+        with (
+            patch("public_data.requests.post", MagicMock(return_value=response)),
+            caplog.at_level(logging.INFO),
+        ):
+            assert fetch_elcom_tariffs(261, 2026) == []
+
+        assert any(
+            item.getMessage()
+            == "[PUBLIC_DATA] ElCom: 0 tariff records for BFS 261/2026"
+            for item in caplog.records
+        ), caplog.messages
+
+        with (
+            patch(
+                "public_data.requests.post", MagicMock(side_effect=RuntimeError("down"))
+            ),
+            caplog.at_level(logging.ERROR),
+        ):
+            assert fetch_elcom_tariffs(261, 2026) is None
+
+        assert any(
+            item.getMessage() == "[PUBLIC_DATA] ElCom fetch failed for BFS 261"
+            for item in caplog.records
+        ), caplog.messages
 
 
 class TestComputeTransitionScore:
