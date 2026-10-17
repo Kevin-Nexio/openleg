@@ -1,8 +1,8 @@
 # Public data mutation survivor classification
 
 Record for the #674 waves (parent #478), updated to the native run at
-`1b966c9` from an empty cache: `public_data.py` scores 1,101 mutants with
-1,055 killed and 46 survived, uncovered at 0.
+`30b6b8e` from an empty cache: `public_data.py` scores 1,101 mutants with
+1,065 killed and 36 survived, uncovered at 0.
 
 ## Intentional equivalents
 
@@ -27,7 +27,7 @@ value; a missing key reaches the same default either way.
 | --- | --- | --- |
 | `compute_leg_value_gap` #88 | `total_rp > 0` → `total_rp >= 0`. | The `total_rp <= 0` guard returns before this branch, so the condition is decisive only when `total_rp > 0`. |
 | `compute_leg_value_gap` #90 | The fallback `else 0` → `else 1`. | Same unreachable branch. |
-| `refresh_municipality` #182, #184, #187 | Default `value_gap.get("annual_savings_chf", ...)`. | Both the computed and the fallback value gap always carry the key, so the dict default never fires. |
+| `refresh_municipality` #85 | Default the tariff category to `"XXXX"`. | A row without the key is skipped under both values and proceeds to the H4 rows that follow. |
 | `refresh_municipality` #134, #138, #139 | Lookup the stored kanton under a different key. | The default stays `"ZH"`, which is exactly what the stored row's own kanton already is for a caller fetching one community's profile. |
 | `refresh_municipality` #209, #213, #214 | Lookup the bulk kanton under a different key. | The fallback value is the already-resolved `profile["kanton"]`, so a failed lookup yields that same value. |
 | `refresh_canton` #44 | Default a bulk row's kanton to `"XXXX"`. | `"XXXX"` is as far from the target kanton as the empty string, and the row is skipped either way before any profile is written. |
