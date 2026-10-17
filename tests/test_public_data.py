@@ -366,6 +366,7 @@ class TestElComQuery:
 
         assert result == [self._RESULT]
         post.assert_called_once()
+        assert post.call_args.args[0] == public_data.LINDAS_ENDPOINT
         _, kwargs = post.call_args
         assert kwargs["headers"] == {"Accept": "application/sparql-results+json"}
         assert kwargs["timeout"] == 30

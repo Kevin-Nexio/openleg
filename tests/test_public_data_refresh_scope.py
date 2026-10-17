@@ -618,10 +618,13 @@ def test_refresh_municipality_pins_the_orchestration_contract(monkeypatch):
         261, _energie_reporter=[er_row], _sonnendach=[sd_row]
     )
 
+    assert result["bfs_number"] == 261
     elcom_spy.assert_called_once_with(261, 2026)
     database.get_municipality_profile.assert_called_once_with(261)
     invalidate.assert_called_once_with(261)
-    database.save_elcom_tariffs.assert_called_once()
+    database.save_elcom_tariffs.assert_called_once_with(
+        [{"category": "H4", "grid_rp_kwh": 9.55, "total_rp_kwh": 27.57}]
+    )
 
     profile = result["profile"]
     del profile["data_sources"]["last_refresh"]
@@ -865,3 +868,58 @@ def test_a_minimal_bulk_row_keeps_the_existing_municipality_values(monkeypatch):
     assert profile["population"] == 700, (
         "an unfilled bulk field falls back to the stored population"
     )
+
+
+def test_a_h4less_tariff_list_reports_the_zero_gap_exactly(monkeypatch):
+    saved_profiles = []
+    monkeypatch.setattr(
+        public_data,
+        "fetch_elcom_tariffs",
+        MagicMock(
+            return_value=[{"category": "H7", "grid_rp_kwh": 9.0, "total_rp_kwh": 25.0}]
+        ),
+    )
+    monkeypatch.setattr(database, "save_elcom_tariffs", MagicMock(return_value=0))
+    monkeypatch.setattr(
+        public_data, "fetch_sonnendach_municipal", MagicMock(return_value=[])
+    )
+    monkeypatch.setattr(
+        database, "get_municipality_profile", MagicMock(return_value=None)
+    )
+    monkeypatch.setattr(
+        database,
+        "save_municipality_profile",
+        lambda profile: saved_profiles.append(profile) or True,
+    )
+    _patch_invalidation(monkeypatch)
+
+    result = public_data.refresh_municipality(261, _energie_reporter=None)
+
+    assert result["value_gap"] == {"annual_savings_chf": 0}
+    assert result["profile"]["leg_value_gap_chf"] == 0
+
+
+def test_a_tariff_row_without_a_category_is_not_an_h4_match(monkeypatch):
+    monkeypatch.setattr(
+        public_data,
+        "fetch_elcom_tariffs",
+        MagicMock(
+            return_value=[
+                {"grid_rp_kwh": 9.0},
+                {"category": "H4", "grid_rp_kwh": 9.0, "total_rp_kwh": 25.0},
+            ]
+        ),
+    )
+    monkeypatch.setattr(database, "save_elcom_tariffs", lambda _rows: 0)
+    monkeypatch.setattr(
+        public_data, "fetch_sonnendach_municipal", MagicMock(return_value=[])
+    )
+    monkeypatch.setattr(
+        database, "get_municipality_profile", MagicMock(return_value=None)
+    )
+    monkeypatch.setattr(database, "save_municipality_profile", lambda profile: True)
+    _patch_invalidation(monkeypatch)
+
+    result = public_data.refresh_municipality(261, _energie_reporter=None)
+
+    assert result["value_gap"]["grid_fee_rp_kwh"] == 9.0
