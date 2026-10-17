@@ -2319,3 +2319,84 @@ def test_prepare_approval_preserves_policy_diagnostic():
         )
 
     assert str(exc.value) == "Die Netzebene der Richtlinie ist ungültig."
+
+
+# ===========================================================================
+# The exact German diagnostics on each fail-closed refusal
+# ===========================================================================
+
+
+@pytest.mark.parametrize(
+    ("draft", "message"),
+    [
+        (
+            {"issue_date": False},
+            "Das Rechnungsdatum ist ungültig.",
+        ),
+        (
+            {"issue_date": "2026-02-05"},
+            "Das Rechnungsdatum ist ungültig.",
+        ),
+        (
+            {"input_fingerprint": "abc"},
+            "Der Abrechnungsentwurf hat keinen gültigen Fingerprint.",
+        ),
+        (
+            {"source_document_ids": []},
+            "Der Abrechnungsentwurf hat keine Quelldokumente.",
+        ),
+        (
+            {"source_document_ids": ["ok", 42]},
+            "Ein Quelldokument hat eine ungültige ID.",
+        ),
+        (
+            {"period_start": "not-a-date", "period_end": "2026-02-01"},
+            "Der Periodenbeginn ist ungültig.",
+        ),
+        (
+            {"period_start": "2026-02-01", "period_end": "not-a-date"},
+            "Das Periodenende ist ungültig.",
+        ),
+        (
+            {"period_start": "2026-02-01", "period_end": "2026-02-01"},
+            "Der Periodenbeginn muss vor dem Periodenende liegen.",
+        ),
+        (
+            {
+                "period_start": date(2026, 1, 1),
+                "period_end": "2026-02-01T00:00:00+01:00",
+            },
+            "Die Zeitangaben haben inkonsistente Zeitformate.",
+        ),
+    ],
+)
+def test_prepare_names_the_exact_diagnostic_for_broken_draft_fields(draft, message):
+    if "issue_date" in draft:
+        with pytest.raises(billing_approval.BillingApprovalError) as exc:
+            billing_approval.prepare_invoice_snapshots(
+                _draft(), issue_date=draft["issue_date"]
+            )
+    else:
+        with pytest.raises(billing_approval.BillingApprovalError) as exc:
+            billing_approval.prepare_invoice_snapshots(
+                _draft(**draft), issue_date=date(2026, 2, 5)
+            )
+
+    assert str(exc.value) == message
+
+
+def test_today_returns_the_swiss_local_date_for_a_late_utc_instant(monkeypatch):
+    """The default issue date follows the Swiss calendar, not the host clock."""
+    from datetime import datetime as real_datetime
+
+    class _FixedClock:
+        @staticmethod
+        def now(tz=None):
+            utc_moment = real_datetime(2026, 2, 5, 23, 30, tzinfo=UTC)
+            if tz is None:
+                return utc_moment
+            return (utc_moment + tz.utcoffset(utc_moment)).replace(tzinfo=None)
+
+    monkeypatch.setattr(billing_approval, "datetime", _FixedClock)
+
+    assert billing_approval.today() == date(2026, 2, 6)
