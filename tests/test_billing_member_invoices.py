@@ -2345,7 +2345,7 @@ def test_pdf_explains_empty_sections_and_omits_an_unknown_legacy_grid_fee():
 
     view = copy.deepcopy(DETAIL_VIEW)
     view.update(charges=[], credits=[], rounding_adjustments=[])
-    view.pop("display_grid_fee_rp")
+    view["display_grid_fee_rp"] = None
     parser = _PdfVisibleText()
     parser.feed(member_invoices.render_pdf_html_string(view))
 
@@ -2386,3 +2386,16 @@ def test_pdf_explains_empty_sections_and_omits_an_unknown_legacy_grid_fee():
         "13.01 CHF",
         "Erstellt mit OpenLEG",
     ]
+
+
+def test_detail_explains_an_overflowing_finite_vat_amount(monkeypatch):
+    import member_invoices
+
+    row = copy.deepcopy(INVOICE_ROW)
+    row["vat_chf"] = "1e1000000"
+    monkeypatch.setattr(member_invoices.db, "get_invoice_for_participant", lambda *_: row)
+
+    with pytest.raises(member_invoices.MemberInvoiceDataError) as exc:
+        member_invoices.detail_view(42, "building-session")
+
+    assert str(exc.value) == "Die Rechnungssummen sind nicht berechenbar."
