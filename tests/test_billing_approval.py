@@ -2820,3 +2820,287 @@ def test_prepare_accepts_a_zero_price_and_zero_battery_cost():
         "battery_kwh": 2.0,
         "value_chf": "0",
     }
+
+
+@pytest.mark.parametrize("direction", ["allocation", "production"])
+def test_prepare_explains_totals_that_disagree_with_billed_energy(direction):
+    draft = _draft()
+    keys = (
+        ("vnb_allocated_kwh", "engine_allocated_kwh")
+        if direction == "allocation"
+        else ("vnb_production_kwh", "engine_production_kwh")
+    )
+    for key in keys:
+        draft["reconciliation"][key] = "1"
+
+    with pytest.raises(billing_approval.BillingApprovalError) as exc:
+        billing_approval.prepare_invoice_snapshots(draft, issue_date=date(2026, 2, 5))
+
+    assert (
+        str(exc.value)
+        == "Abgleich und Abrechnungspositionen melden unterschiedliche Mengen."
+    )
+
+
+@pytest.mark.parametrize(
+    "problem",
+    [
+        "backwards",
+        "duplicate",
+        "missing_rounding",
+        "unnecessary_rounding",
+        "quantity_mismatch",
+    ],
+)
+def test_prepare_explains_remaining_period_and_line_conflicts(problem):
+    draft = _draft()
+    if problem == "backwards":
+        draft.update(period_start="2026-03-01", period_end="2026-02-01")
+        message = "Der Periodenbeginn muss vor dem Periodenende liegen."
+    elif problem == "duplicate":
+        draft["line_items"].append(dict(draft["line_items"][0]))
+        message = "Jeder Teilnehmer darf pro Positionstyp nur eine Position haben."
+    elif problem == "missing_rounding":
+        draft["line_items"].pop(2)
+        message = "Der Abrechnungsentwurf braucht genau einen Rundungsausgleich."
+    elif problem == "unnecessary_rounding":
+        draft["line_items"][1].update(
+            quantity_kwh=Decimal("13.366670"), amount_chf=Decimal("2.005001")
+        )
+        draft["line_items"][3].update(quantity_kwh=Decimal(0), amount_chf=Decimal(0))
+        message = (
+            "Ein Rundungsausgleich ist bei ausgeglichenen Beträgen nicht erforderlich."
+        )
+    else:
+        draft["line_items"][1]["quantity_kwh"] = Decimal("13.366669")
+        message = "Die abgerechneten Energiemengen sind nicht ausgeglichen."
+
+    with pytest.raises(billing_approval.BillingApprovalError) as exc:
+        billing_approval.prepare_invoice_snapshots(draft, issue_date=date(2026, 2, 5))
+
+    assert str(exc.value) == message
+
+
+def test_prepare_keeps_vat_rounding_and_provenance_independent_of_decimal_context():
+    from decimal import ROUND_DOWN, localcontext
+
+    draft = _draft_with_settlement_fee()
+    draft["billing_policy_snapshot"]["vat_rate_pct"] = "10"
+    draft["line_items"] = list(reversed(draft["line_items"]))
+    with localcontext() as context:
+        context.rounding = ROUND_DOWN
+        charged = billing_approval.prepare_invoice_snapshots(
+            draft, issue_date=date(2026, 2, 5)
+        )[0]
+
+    assert charged["net_chf"] == Decimal("2.27")
+    assert charged["vat_chf"] == Decimal("0.23")
+    assert charged["gross_chf"] == Decimal("2.50")
+    assert [item["id"] for item in charged["line_items_snapshot"]] == [1, 5]
+    assert charged["provenance_snapshot"]["input_fingerprint"] == "a" * 64
+    assert charged["provenance_snapshot"]["source_document_ids"] == [
+        "swisseldex-bkw-2026-01"
+    ]
+
+
+@pytest.mark.parametrize(
+    "problem",
+    [
+        "no_snapshot",
+        "invalid_config",
+        "missing_share",
+        "unknown_share",
+        "missing_charge",
+        "excess_charge",
+        "wrong_allocation",
+    ],
+)
+def test_prepare_explains_battery_configuration_and_allocation_conflicts(problem):
+    draft = _battery_draft_for_approval()
+    if problem == "no_snapshot":
+        draft.pop("battery_snapshot")
+        message = "Ein Quartierakku-Anteil passt nicht zum Entwurf."
+    elif problem == "invalid_config":
+        draft["battery_snapshot"]["shares"] = {}
+        message = "Jeder Teilnehmer braucht einen Anteil am Quartierakku."
+    elif problem == "missing_share":
+        draft["line_items"] = [
+            item
+            for item in draft["line_items"]
+            if item["item_type"] != "battery_cost_share"
+        ]
+        message = "Der Quartierakku ist unvollständig konfiguriert: Jeder beteiligte Teilnehmer braucht genau einen Anteil."
+    elif problem == "unknown_share":
+        draft["battery_snapshot"]["shares"] = {"other": "100"}
+        message = "Der Quartierakku ist unvollständig konfiguriert: Teilnehmer home hat keinen Anteil."
+    elif problem in ("missing_charge", "excess_charge"):
+        if problem == "missing_charge":
+            draft["line_items"] = [
+                item
+                for item in draft["line_items"]
+                if not (
+                    item["participant_id"] == "battery"
+                    and item["item_type"] == "consumer_charge"
+                )
+            ]
+            draft["line_items"][0].update(quantity_kwh=4.0, amount_chf=0.6)
+            draft["battery_snapshot"]["attribution"]["home"]["direct_solar_kwh"] = "2"
+            draft["reconciliation"]["per_participant"] = {
+                "home": {"vnb_kwh": 4.0, "engine_kwh": 4.0, "difference_kwh": 0}
+            }
+        else:
+            draft["battery_snapshot"]["energy"].update(
+                charged_kwh="0.5", charge_discharge_difference_kwh="-1.5"
+            )
+        message = "Die Energieaufteilung des Quartierakkus stimmt nicht mit dem Entwurf überein."
+    else:
+        draft["battery_snapshot"]["energy"].update(
+            allocated_battery_kwh="1", unallocated_discharge_kwh="1"
+        )
+        draft["battery_snapshot"]["attribution"]["home"].update(
+            direct_solar_kwh="2", battery_kwh="1", value_chf="0.15"
+        )
+        message = "Die Energieaufteilung des Quartierakkus stimmt nicht mit dem Entwurf überein."
+
+    with pytest.raises(billing_approval.BillingApprovalError) as exc:
+        billing_approval.prepare_invoice_snapshots(draft, issue_date=date(2026, 2, 5))
+
+    assert str(exc.value) == message
+
+
+def test_prepare_accepts_datetime_periods_and_attributes_battery_energy_to_each_member():
+    draft = _battery_draft_for_approval()
+    draft["period_start"] = datetime.fromisoformat(draft["period_start"])
+    draft["period_end"] = datetime.fromisoformat(draft["period_end"])
+    draft["battery_snapshot"]["annual_cost_chf"] = "0"
+    draft["battery_snapshot"]["shares"] = {"home": "50", "other": "50"}
+    draft["battery_snapshot"]["attribution"] = {
+        "home": {"direct_solar_kwh": "1", "battery_kwh": "1", "value_chf": "0.15"},
+        "other": {"direct_solar_kwh": "0", "battery_kwh": "1", "value_chf": "0.15"},
+    }
+    draft["line_items"][0].update(quantity_kwh=2.0, amount_chf=0.30)
+    draft["line_items"][-1]["amount_chf"] = Decimal(0)
+    draft["line_items"].extend(
+        [
+            {
+                "participant_id": "other",
+                "item_type": "consumer_charge",
+                "quantity_kwh": 1.0,
+                "unit_price_chf_per_kwh": 0.15,
+                "amount_chf": 0.15,
+            },
+            {
+                "participant_id": "other",
+                "item_type": "battery_cost_share",
+                "quantity_kwh": None,
+                "unit_price_chf_per_kwh": None,
+                "amount_chf": Decimal(0),
+            },
+        ]
+    )
+    draft["reconciliation"]["per_participant"].update(
+        home={"vnb_kwh": 2.0, "engine_kwh": 2.0, "difference_kwh": 0},
+        other={"vnb_kwh": 1.0, "engine_kwh": 1.0, "difference_kwh": 0},
+    )
+
+    snapshots = billing_approval.prepare_invoice_snapshots(
+        draft, issue_date=date(2026, 2, 5)
+    )
+
+    assert [row["participant_id"] for row in snapshots] == ["battery", "home", "other"]
+    assert snapshots[1]["provenance_snapshot"]["battery_source"] == {
+        "battery_kwh": "1",
+        "value_chf": "0.15",
+    }
+    assert snapshots[2]["provenance_snapshot"]["battery_source"] == {
+        "battery_kwh": "1",
+        "value_chf": "0.15",
+    }
+    assert (
+        snapshots[0]["provenance_snapshot"]["period_start"]
+        == "2026-01-01T00:00:00+01:00"
+    )
+
+
+def test_prepare_accepts_the_documented_energy_precision_boundary():
+    draft = _draft()
+    draft["line_items"] = [draft["line_items"][0], draft["line_items"][1]]
+    draft["line_items"][1].update(
+        quantity_kwh=Decimal("13.366671"), amount_chf=Decimal("2.005001")
+    )
+    draft["reconciliation"].update(
+        vnb_allocated_kwh="13.366671",
+        engine_allocated_kwh="13.366671",
+        per_participant={
+            "building-a": {
+                "vnb_kwh": "13.366671",
+                "engine_kwh": "13.366671",
+                "difference_kwh": "0",
+            }
+        },
+    )
+
+    snapshots = billing_approval.prepare_invoice_snapshots(
+        draft, issue_date=date(2026, 2, 5)
+    )
+
+    assert [row["participant_id"] for row in snapshots] == ["building-a", "building-b"]
+    assert snapshots[0]["net_chf"] == Decimal("2.01")
+    assert snapshots[1]["net_chf"] == Decimal("-2.01")
+
+
+def test_prepare_counts_each_consumer_and_producer_at_the_precision_boundary():
+    draft = _draft()
+    draft["line_items"][0].update(
+        quantity_kwh=Decimal(10), amount_chf=Decimal("-1.500000")
+    )
+    draft["line_items"][1].update(quantity_kwh=Decimal("13.366669"))
+    draft["line_items"].append(
+        {
+            "id": 5,
+            "participant_id": "building-d",
+            "item_type": "producer_credit",
+            "quantity_kwh": Decimal("3.366670"),
+            "unit_price_chf_per_kwh": Decimal("0.150000"),
+            "amount_chf": Decimal("-0.505001"),
+        }
+    )
+    draft["reconciliation"].update(
+        vnb_allocated_kwh="13.366672",
+        engine_allocated_kwh="13.366672",
+        per_participant={
+            "building-a": {
+                "vnb_kwh": "13.366669",
+                "engine_kwh": "13.366669",
+                "difference_kwh": "0",
+            },
+            "building-c": {
+                "vnb_kwh": "0.000003",
+                "engine_kwh": "0.000003",
+                "difference_kwh": "0",
+            },
+        },
+        production_per_participant={
+            "building-b": {"vnb_kwh": "10", "engine_kwh": "10", "difference_kwh": "0"},
+            "building-d": {
+                "vnb_kwh": "3.366670",
+                "engine_kwh": "3.366670",
+                "difference_kwh": "0",
+            },
+        },
+    )
+
+    snapshots = billing_approval.prepare_invoice_snapshots(
+        draft, issue_date=date(2026, 2, 5)
+    )
+
+    assert [row["participant_id"] for row in snapshots] == [
+        "building-a",
+        "building-b",
+        "building-c",
+        "building-d",
+    ]
+    assert snapshots[1]["provenance_snapshot"]["rounding_adjustment"] == {
+        "participant_id": "building-b",
+        "amount_chf": "0.000001",
+    }
