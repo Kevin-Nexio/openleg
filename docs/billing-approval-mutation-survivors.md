@@ -10,8 +10,12 @@ killed 5,386 and retained 1,683 survivors, with zero uncovered mutants and
 no other statuses. The strict score was 76.19%. Billing approval held
 1,261 mutants: 844 killed and 417 survived.
 
-The PR validation record retains the final native revision and full before
-and after counts. Each run starts with an absent `mutants/` cache, keeps the
+At test revision `1242b32`, the module has 1,192 killed
+and 69 survived, retiring 348 survivors. The full configured run has
+5,734 killed and 1,335 survived, strict score 81.11%,
+with zero uncovered mutants and no other statuses. The following change
+to this record only documents the reviewed schema bound; tested Python and
+configuration files are unchanged. Each run starts with an absent `mutants/` cache, keeps the
 tracked `pyproject.toml` unchanged, and executes `python -m pytest -q tests`
 before and after the unfiltered native run. The external evidence contains
 `evidence.json`, native `results --all true`, native CI statistics and every
@@ -62,16 +66,28 @@ caller-installed traps or changes to precision/exponent limits.
 | `prepare_invoice_snapshots` 173 | Equivalent sum start. Every grouped participant has at least one validated Decimal amount. Both starts produce the same sum, including zero-cost snapshots. |
 | `prepare_invoice_snapshots` 181, 182, 183, 184, 199, 200, 201, 202 | Guarded snapshot arithmetic. Validated position cardinality, six-decimal product money, reconciled battery cost shares and the bounded residual constrain each participant's net. VAT is finite and capped at 100%. The normal-context net/cent/VAT operations cannot reach these extra refusals. The positive, zero, settlement and battery snapshot tests check those results. |
 
-## Unresolved guard candidates
+## Persisted residual quantization
 
-`_require_rounding_adjustment` 52, 53, 54 and 55 change the diagnostic if
-quantizing the non-rounding residual fails. Shared pricing, quantum-aligned
-amounts and the energy balance protect ordinary persisted billing inputs.
-However, an unrestricted equivalence claim also needs an argument about
-arbitrarily large input collections and accumulated Decimal rounding.
-No such proof is claimed here. Keep these four records unresolved and keep
-#672 open for that review; do not manufacture private-helper tests or change
-the production contract merely to reach a score.
+`_require_rounding_adjustment` 52, 53, 54 and 55 are guarded on the
+production path. `store/billing.py::approve_billing_period` reads persisted
+line items in id order and passes them unchanged to the preparation seam.
+`store/schema.py` declares their primary key as `SERIAL` and `amount_chf`
+as `DECIMAL(12,6)`; the compatibility migration preserves those types.
+
+Even allowing every signed integer primary-key value, there are at most
+2^32 distinct rows. Each absolute amount is below 10^6 CHF. The sum of
+absolute values is therefore below 4.295 x 10^15 CHF. At six decimal places,
+it needs at most 22 significant digits. Every intermediate sum is within
+that same absolute bound, so the ordinary Decimal precision of 28 can add,
+negate and quantize this residual exactly. The exceptional diagnostic cannot
+be reached by a supported persisted draft.
+
+This is a production-schema guard, not a claim about arbitrary synthetic
+lists accepted by the Python function or a database altered outside the
+tracked schema. Revisit the classification if either column type, the caller
+or the Decimal context changes. Independent review checked the schema,
+compatibility migration and sole production caller before accepting this
+classification.
 
 No generated records were deleted, no cache reused for evidence, no status
 rewritten and no equivalent waiver applied. The strict gate remains blocked.
