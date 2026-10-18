@@ -3104,3 +3104,139 @@ def test_prepare_counts_each_consumer_and_producer_at_the_precision_boundary():
         "participant_id": "building-b",
         "amount_chf": "0.000001",
     }
+
+
+def test_prepare_refuses_a_half_micro_kwh_reconciliation_gap():
+    draft = _draft()
+    draft["reconciliation"]["vnb_allocated_kwh"] = "13.3666695"
+
+    with pytest.raises(billing_approval.BillingApprovalError) as exc:
+        billing_approval.prepare_invoice_snapshots(draft, issue_date=date(2026, 2, 5))
+
+    assert str(exc.value) == "Der Abgleich zwischen OpenLEG und VNB weicht ab."
+
+
+@pytest.mark.parametrize("at_bound", [False, True])
+def test_prepare_distinguishes_an_excessive_residual_from_an_incorrect_one(at_bound):
+    draft = _draft()
+    if at_bound:
+        draft["line_items"].append(
+            {
+                "id": 5,
+                "participant_id": "other",
+                "item_type": "consumer_charge",
+                "quantity_kwh": Decimal(0),
+                "unit_price_chf_per_kwh": Decimal("0.150000"),
+                "amount_chf": Decimal(0),
+            }
+        )
+    draft["line_items"][2]["amount_chf"] = Decimal("0.000002")
+
+    with pytest.raises(billing_approval.BillingApprovalError) as exc:
+        billing_approval.prepare_invoice_snapshots(draft, issue_date=date(2026, 2, 5))
+
+    assert str(exc.value) == (
+        "Der Rundungsausgleich schliesst den Betrag nicht korrekt ab."
+        if at_bound
+        else "Der Rundungsausgleich übersteigt den zulässigen Restbetrag."
+    )
+
+
+def test_prepare_orders_a_legacy_position_without_a_database_id_before_persisted_positions():
+    draft = _draft_with_settlement_fee()
+    draft["line_items"][-2].pop("id")
+
+    charged = billing_approval.prepare_invoice_snapshots(
+        draft, issue_date=date(2026, 2, 5)
+    )[0]
+
+    assert [item["item_type"] for item in charged["line_items_snapshot"]] == [
+        "settlement_fee",
+        "consumer_charge",
+    ]
+
+
+@pytest.mark.parametrize("direction", ["consumer_charge", "producer_credit"])
+def test_prepare_refuses_overflowing_sums_of_finite_energy(direction):
+    draft = _draft()
+    draft["billing_policy_snapshot"]["internal_price_chf_per_kwh"] = "0"
+    draft["line_items"] = [
+        item
+        for item in draft["line_items"]
+        if item["item_type"] != "rounding_adjustment"
+    ]
+    for item in draft["line_items"]:
+        item.update(
+            unit_price_chf_per_kwh=Decimal(0),
+            amount_chf=Decimal(0),
+            quantity_kwh=Decimal("9e999999")
+            if item["item_type"] == direction
+            else Decimal(0),
+        )
+    if direction == "producer_credit":
+        draft["line_items"].append(
+            {
+                "participant_id": "another-producer",
+                "item_type": direction,
+                "quantity_kwh": Decimal("9e999999"),
+                "unit_price_chf_per_kwh": Decimal(0),
+                "amount_chf": Decimal(0),
+            }
+        )
+
+    with pytest.raises(billing_approval.BillingApprovalError) as exc:
+        billing_approval.prepare_invoice_snapshots(draft, issue_date=date(2026, 2, 5))
+
+    assert str(exc.value) == "Die abgerechneten Energiemengen sind nicht ausgeglichen."
+
+
+def test_prepare_rounds_each_frozen_battery_value_half_up():
+    draft = _battery_draft_for_approval()
+    draft["billing_policy_snapshot"]["internal_price_chf_per_kwh"] = "0.152500"
+    draft["battery_snapshot"]["attribution"]["home"]["value_chf"] = "0.31"
+    for item in draft["line_items"]:
+        if item["item_type"] == "consumer_charge":
+            item["unit_price_chf_per_kwh"] = Decimal("0.152500")
+            item["amount_chf"] = (
+                Decimal("0.457500")
+                if item["participant_id"] == "home"
+                else Decimal("0.152500")
+            )
+        elif item["item_type"] == "producer_credit":
+            item.update(
+                unit_price_chf_per_kwh=Decimal("0.152500"),
+                amount_chf=Decimal("-0.305000"),
+            )
+    snapshots = billing_approval.prepare_invoice_snapshots(
+        draft, issue_date=date(2026, 2, 5)
+    )
+
+    assert snapshots[1]["provenance_snapshot"]["battery_source"] == {
+        "battery_kwh": 2.0,
+        "value_chf": "0.31",
+    }
+
+
+def test_prepare_explains_overflow_while_summing_finite_rounding_positions():
+    draft = _draft()
+    draft["line_items"][2]["amount_chf"] = Decimal("9e999999")
+    draft["line_items"].append(dict(draft["line_items"][2]))
+
+    with pytest.raises(billing_approval.BillingApprovalError) as exc:
+        billing_approval.prepare_invoice_snapshots(draft, issue_date=date(2026, 2, 5))
+
+    assert str(exc.value) == "Der Rundungsausgleich enthält einen ungültigen Betrag."
+
+
+def test_prepare_explains_rounding_without_any_producer():
+    draft = _draft()
+    draft["line_items"] = [draft["line_items"][1], draft["line_items"][2]]
+    draft["line_items"][0].update(quantity_kwh=Decimal(0), amount_chf=Decimal(0))
+
+    with pytest.raises(billing_approval.BillingApprovalError) as exc:
+        billing_approval.prepare_invoice_snapshots(draft, issue_date=date(2026, 2, 5))
+
+    assert (
+        str(exc.value)
+        == "Ein Rundungsausgleich ist ohne Produzentengutschrift nicht zulässig."
+    )
