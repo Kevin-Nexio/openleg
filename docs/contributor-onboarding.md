@@ -267,9 +267,11 @@ those databases. The example creates a superuser inside this disposable cluster
 only; do not grant these privileges on a production server.
 
 The fixtures create randomly named databases and drop them in `finally` blocks.
-The subshell's exit trap stops the server and removes the entire disposable
-cluster, including databases left by an interrupted test. `DATABASE_URL` and
-the helper variables stay inside the subshell. If the shell is killed before
+The subshell's exit trap stops the server and removes the disposable cluster,
+including databases left by an interrupted test, when stopping succeeds. If
+`pg_ctl ... stop` fails, the directory is retained. Stop the server before
+removing that directory. `DATABASE_URL` and the helper variables stay inside
+the subshell. If the shell is killed before
 the trap runs, stop that cluster with `pg_ctl -D <temporary-directory>/data -m fast -w stop`
 before removing its temporary directory. Do not reuse a failed cluster as a
 fresh validation result.
