@@ -2393,7 +2393,9 @@ def test_detail_explains_an_overflowing_finite_vat_amount(monkeypatch):
 
     row = copy.deepcopy(INVOICE_ROW)
     row["vat_chf"] = "1e1000000"
-    monkeypatch.setattr(member_invoices.db, "get_invoice_for_participant", lambda *_: row)
+    monkeypatch.setattr(
+        member_invoices.db, "get_invoice_for_participant", lambda *_: row
+    )
 
     with pytest.raises(member_invoices.MemberInvoiceDataError) as exc:
         member_invoices.detail_view(42, "building-session")
