@@ -13,6 +13,7 @@ detail_view() dict the HTML page used, not from a second calculation.
 import copy
 import json
 import re
+from html.parser import HTMLParser
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
@@ -2091,28 +2092,27 @@ def test_detail_explains_invalid_rounding_evidence(monkeypatch, path, value, mes
     assert str(exc.value) == message
 
 
-def test_pdf_visible_values_include_charges_credits_and_rounding():
-    from html.parser import HTMLParser
+class _PdfVisibleText(HTMLParser):
+    def __init__(self):
+        super().__init__()
+        self.in_style = False
+        self.parts = []
 
-    import member_invoices
+    def handle_starttag(self, tag, attrs):
+        if tag == "style":
+            self.in_style = True
 
-    class VisibleText(HTMLParser):
-        def __init__(self):
-            super().__init__()
+    def handle_endtag(self, tag):
+        if tag == "style":
             self.in_style = False
-            self.parts = []
 
-        def handle_starttag(self, tag, attrs):
-            if tag == "style":
-                self.in_style = True
+    def handle_data(self, data):
+        if not self.in_style and data.strip():
+            self.parts.append(data.strip())
 
-        def handle_endtag(self, tag):
-            if tag == "style":
-                self.in_style = False
 
-        def handle_data(self, data):
-            if not self.in_style and data.strip():
-                self.parts.append(data.strip())
+def test_pdf_visible_values_include_charges_credits_and_rounding():
+    import member_invoices
 
     view = copy.deepcopy(DETAIL_VIEW)
     view["rounding_adjustments"] = [
@@ -2123,7 +2123,7 @@ def test_pdf_visible_values_include_charges_credits_and_rounding():
             "display_amount_chf": "0.01",
         }
     ]
-    parser = VisibleText()
+    parser = _PdfVisibleText()
     parser.feed(member_invoices.render_pdf_html_string(view))
 
     assert parser.parts == [
@@ -2338,3 +2338,51 @@ def test_detail_refuses_inconsistent_frozen_evidence_before_display(
         member_invoices.detail_view(42, "building-session")
 
     assert str(exc.value) == message
+
+
+def test_pdf_explains_empty_sections_and_omits_an_unknown_legacy_grid_fee():
+    import member_invoices
+
+    view = copy.deepcopy(DETAIL_VIEW)
+    view.update(charges=[], credits=[], rounding_adjustments=[])
+    view.pop("display_grid_fee_rp")
+    parser = _PdfVisibleText()
+    parser.feed(member_invoices.render_pdf_html_string(view))
+
+    assert parser.parts == [
+        "Rechnung LEG-2026-000001",
+        "Aussteller:",
+        "LEG Musterweg",
+        "Periode:",
+        "Juli 2026",
+        "Rechnungsdatum:",
+        "2026-08-05",
+        "Fällig am:",
+        "2026-09-04",
+        "Interner Preis:",
+        "15.00 Rp./kWh",
+        "Zahlungsfrist:",
+        "30 Tage",
+        "Verbrauchskosten",
+        "Position",
+        "Menge (kWh)",
+        "Preis (Rp./kWh)",
+        "Betrag (CHF)",
+        "Keine Verbrauchskosten",
+        "Gutschriften und Ausgleich",
+        "Position",
+        "Menge (kWh)",
+        "Preis (Rp./kWh)",
+        "Betrag (CHF)",
+        "Keine Gutschriften",
+        "Mehrwertsteuer",
+        "Mehrwertsteuer ausweisen (7.70%)",
+        "Total",
+        "Nettobetrag",
+        "12.08 CHF",
+        "Mehrwertsteuer",
+        "0.93 CHF",
+        "Gesamtbetrag",
+        "13.01 CHF",
+        "Erstellt mit OpenLEG",
+    ]
