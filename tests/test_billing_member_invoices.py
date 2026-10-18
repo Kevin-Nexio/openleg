@@ -2175,3 +2175,166 @@ def test_pdf_visible_values_include_charges_credits_and_rounding():
         "13.01 CHF",
         "Erstellt mit OpenLEG",
     ]
+
+
+def test_detail_rounds_display_values_independently_of_decimal_context(monkeypatch):
+    from decimal import ROUND_DOWN, localcontext
+
+    import member_invoices
+
+    monkeypatch.setattr(
+        member_invoices.db,
+        "get_invoice_for_participant",
+        lambda *_: copy.deepcopy(INVOICE_ROW),
+    )
+    with localcontext() as context:
+        context.rounding = ROUND_DOWN
+        view = member_invoices.detail_view(42, "building-session")
+
+    assert view["charges"][0]["display_amount_chf"] == "18.08"
+    assert view["display_gross_chf"] == "13.01"
+
+
+@pytest.mark.parametrize(
+    ("rate", "vat", "gross"), [("0.5", "0.06", "12.14"), ("100", "12.08", "24.16")]
+)
+def test_detail_accepts_positive_vat_at_the_allowed_boundaries(
+    monkeypatch, rate, vat, gross
+):
+    import member_invoices
+
+    row = copy.deepcopy(INVOICE_ROW)
+    row["policy_snapshot"]["vat_rate_pct"] = rate
+    row.update(vat_rate_pct=rate, vat_chf=vat, gross_chf=gross)
+    monkeypatch.setattr(
+        member_invoices.db, "get_invoice_for_participant", lambda *_: row
+    )
+
+    view = member_invoices.detail_view(42, "building-session")
+
+    assert view["display_vat_chf"] == vat
+    assert view["display_gross_chf"] == gross
+
+
+@pytest.mark.parametrize(
+    "problem",
+    [
+        "quantity",
+        "price",
+        "duplicate",
+        "double_rounding",
+        "no_producer",
+        "empty_production",
+        "bad_producer_id",
+        "overflow",
+    ],
+)
+def test_detail_explains_remaining_position_and_source_failures(monkeypatch, problem):
+    import member_invoices
+
+    row = _rounded_invoice()
+    if problem in ("quantity", "price"):
+        row = _battery_invoice_row()
+        share = next(
+            item
+            for item in row["line_items_snapshot"]
+            if item["item_type"] == "battery_cost_share"
+        )
+        share["quantity_kwh" if problem == "quantity" else "unit_price_chf_per_kwh"] = (
+            "0"
+        )
+        message = "Ein Quartierakku-Anteil darf weder Menge noch Preis enthalten."
+    elif problem == "duplicate":
+        row["line_items_snapshot"].append(copy.deepcopy(row["line_items_snapshot"][0]))
+        message = "Die Rechnung enthält doppelte Positionen."
+    elif problem == "double_rounding":
+        row["line_items_snapshot"].append(copy.deepcopy(row["line_items_snapshot"][-1]))
+        message = "Der Rundungsausgleich ist nicht zulässig."
+    elif problem == "no_producer":
+        row["line_items_snapshot"].pop(1)
+        message = "Der Rundungsausgleich ist nicht zulässig."
+    elif problem == "empty_production":
+        row["provenance_snapshot"]["reconciliation"]["production_per_participant"] = {}
+        message = "Der Rundungsausgleich ist nicht zulässig."
+    elif problem == "bad_producer_id":
+        row["provenance_snapshot"]["reconciliation"]["production_per_participant"] = {
+            42: {},
+            "building-session": {},
+        }
+        # Invalid ids do not nominate a producer; the valid frozen id still does.
+        message = None
+    else:
+        row["provenance_snapshot"]["battery_source"] = {
+            "battery_kwh": "1e40",
+            "value_chf": "1",
+        }
+        message = "Ein Betrag der Rechnung ist ungültig."
+    monkeypatch.setattr(
+        member_invoices.db, "get_invoice_for_participant", lambda *_: row
+    )
+
+    if message is None:
+        assert (
+            member_invoices.detail_view(42, "building-session")["display_gross_chf"]
+            == "13.02"
+        )
+    else:
+        with pytest.raises(member_invoices.MemberInvoiceDataError) as exc:
+            member_invoices.detail_view(42, "building-session")
+        assert str(exc.value) == message
+
+
+def test_detail_preserves_the_invoice_lifecycle_error(monkeypatch):
+    import member_invoices
+
+    row = copy.deepcopy(INVOICE_ROW)
+    row["lifecycle_state"] = "invalid"
+    monkeypatch.setattr(
+        member_invoices.db, "get_invoice_for_participant", lambda *_: row
+    )
+
+    with pytest.raises(member_invoices.MemberInvoiceDataError) as exc:
+        member_invoices.detail_view(42, "building-session")
+
+    assert str(exc.value) == "Die Rechnung hat einen ungültigen Status."
+
+
+@pytest.mark.parametrize("problem", ["production_list", "vat_exempt", "sum_overflow"])
+def test_detail_refuses_inconsistent_frozen_evidence_before_display(
+    monkeypatch, problem
+):
+    import member_invoices
+
+    row = _rounded_invoice()
+    if problem == "production_list":
+        row["provenance_snapshot"]["reconciliation"]["production_per_participant"] = [
+            "building-session"
+        ]
+        message = "Der Rundungsausgleich ist nicht zulässig."
+    elif problem == "vat_exempt":
+        row["policy_snapshot"]["vat_mode"] = "none"
+        message = "Die Rechnung hat einen ungültigen Mehrwertsteuersatz."
+    else:
+        row["line_items_snapshot"][-1]["amount_chf"] = "90000000000000000000000000"
+        row["line_items_snapshot"].append(
+            {
+                "participant_id": "building-session",
+                "item_type": "battery_cost_share",
+                "quantity_kwh": None,
+                "unit_price_chf_per_kwh": None,
+                "amount_chf": "90000000000000000000000000",
+            }
+        )
+        row["provenance_snapshot"]["rounding_adjustment"] = {
+            "participant_id": "building-session",
+            "amount_chf": "90000000000000000000000000",
+        }
+        message = "Die Rechnungssumme ist nicht berechenbar."
+    monkeypatch.setattr(
+        member_invoices.db, "get_invoice_for_participant", lambda *_: row
+    )
+
+    with pytest.raises(member_invoices.MemberInvoiceDataError) as exc:
+        member_invoices.detail_view(42, "building-session")
+
+    assert str(exc.value) == message
