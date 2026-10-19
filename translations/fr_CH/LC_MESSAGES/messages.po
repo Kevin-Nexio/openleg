@@ -1381,7 +1381,7 @@ msgstr "Charge de la batterie"
 
 #: templates/telemetry_dashboard.html:12
 msgid "Batteriestand"
-msgstr "Charge de la batterie"
+msgstr "Niveau de batterie"
 
 #: templates/leg_gruenden.html:199
 msgid ""
