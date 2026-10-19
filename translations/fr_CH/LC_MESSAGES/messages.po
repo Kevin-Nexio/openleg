@@ -534,7 +534,7 @@ msgstr "Argovie"
 
 #: templates/leg_community_create.html:27
 msgid "Abbrechen"
-msgstr "Abbrechen"
+msgstr "Annuler"
 
 #: templates/admin/ops.html:97
 msgid "Abdeckungsanfrage"
@@ -2428,9 +2428,7 @@ msgstr ""
 msgid ""
 "Der mit diesem Link verknüpfte Eintrag (Adressprofil oder offene Gebietsanfrage) ist jetzt "
 "erfolgreich gelöscht."
-msgstr ""
-"Der mit diesem Link verknüpfte Eintrag (Adressprofil oder offene Gebietsanfrage) ist jetzt "
-"erfolgreich gelöscht."
+msgstr "L’entrée liée à ce lien (profil d’adresse ou demande de couverture ouverte) a été supprimée."
 
 #: pv_ranking.py:29
 msgid "Dicht"
@@ -2520,9 +2518,9 @@ msgid ""
 " Gebietsanfrage. Bereits ausgestellte Rechnungen, abrechnungsrelevante Messdaten und "
 "Nutzungsereignisse bleiben erhalten."
 msgstr ""
-"Die Bestätigung löscht das verknüpfte Adressprofil samt Einwilligungen oder die verknüpfte offene"
-" Gebietsanfrage. Bereits ausgestellte Rechnungen, abrechnungsrelevante Messdaten und "
-"Nutzungsereignisse bleiben erhalten."
+"La confirmation supprime le profil d’adresse lié avec ses consentements ou la demande de "
+"couverture ouverte liée. Les factures déjà émises, les données de comptage nécessaires à la "
+"facturation et les événements d’utilisation sont conservés."
 
 #: templates/dashboard.html:149
 msgid "Die Daten aus Ihrer letzten Stromrechnung reichen."
@@ -3038,8 +3036,8 @@ msgid ""
 "Dieser Schritt löscht den mit dem Link verknüpften Eintrag endgültig: ein Adressprofil oder eine "
 "offene Gebietsanfrage."
 msgstr ""
-"Dieser Schritt löscht den mit dem Link verknüpften Eintrag endgültig: ein Adressprofil oder eine "
-"offene Gebietsanfrage."
+"Cette étape supprime définitivement l’entrée liée au lien : un profil d’adresse ou une demande de"
+" couverture ouverte."
 
 #: billing_lifecycle.py:43
 msgid "Dieser Statuswechsel ist nicht zulässig."
@@ -3938,8 +3936,8 @@ msgid ""
 "Fordern Sie Bestätigungslinks an, um Ihr Adressprofil oder Ihre offenen Gebietsanfragen bei "
 "%(platform)s zu löschen."
 msgstr ""
-"Fordern Sie Bestätigungslinks an, um Ihr Adressprofil oder Ihre offenen Gebietsanfragen bei "
-"%(platform)s zu löschen."
+"Demandez des liens de confirmation pour supprimer votre profil d’adresse ou vos demandes de "
+"couverture ouvertes sur %(platform)s."
 
 #: i18n.py:70
 msgid "Format nicht verfügbar"
@@ -4429,7 +4427,7 @@ msgstr ""
 
 #: templates/leg_community_create.html:26
 msgid "Gemeinschaft anlegen"
-msgstr "Gemeinschaft anlegen"
+msgstr "Créer la communauté"
 
 #: templates/partials/registry_trust.html:16
 msgid "Gemeldete Angaben bestätigt am"
@@ -5844,11 +5842,11 @@ msgstr "Outils CEL"
 
 #: templates/dashboard.html:45 templates/leg_community_create.html:10
 msgid "LEG anlegen"
-msgstr "LEG anlegen"
+msgstr "Créer une CEL"
 
 #: templates/leg_community_create.html:5
 msgid "LEG anlegen | OpenLEG"
-msgstr "LEG anlegen | OpenLEG"
+msgstr "Créer une CEL | OpenLEG"
 
 #: templates/gemeinde/pilotgemeinde.html:38
 msgid "LEG anmelden"
@@ -6111,15 +6109,15 @@ msgstr "Fichier SDAT vide"
 
 #: templates/leg_community_create.html:5
 msgid "Legen Sie Ihre Gemeinschaft an und laden Sie Mitglieder ein."
-msgstr "Legen Sie Ihre Gemeinschaft an und laden Sie Mitglieder ein."
+msgstr "Créez votre communauté et invitez des membres."
 
 #: templates/leg_community_create.html:11
 msgid ""
 "Legen Sie Ihre Gemeinschaft an und laden Sie danach Mitglieder ein. Die Anmeldung beim "
 "Netzbetreiber folgt im Gründungsprozess."
 msgstr ""
-"Legen Sie Ihre Gemeinschaft an und laden Sie danach Mitglieder ein. Die Anmeldung beim "
-"Netzbetreiber folgt im Gründungsprozess."
+"Créez votre communauté, puis invitez des membres. L’inscription auprès du gestionnaire de réseau "
+"intervient au cours de la création."
 
 #: templates/leg_dashboard.html:387
 msgid ""
@@ -6758,7 +6756,7 @@ msgstr "Nom"
 
 #: templates/leg_community_create.html:16
 msgid "Name der Gemeinschaft"
-msgstr "Name der Gemeinschaft"
+msgstr "Nom de la communauté"
 
 #: templates/leg_verzeichnis/eintragen.html:35
 msgid "Name der LEG *"
@@ -9304,9 +9302,9 @@ msgid ""
 "Gebietsanfrage senden wir Ihnen einen eigenen Bestätigungslink. Erst mit Ihrer Bestätigung "
 "löschen wir den mit dem jeweiligen Link verknüpften Eintrag."
 msgstr ""
-"Tragen Sie Ihre E-Mail-Adresse ein. Für jedes hinterlegte Adressprofil und jede offene "
-"Gebietsanfrage senden wir Ihnen einen eigenen Bestätigungslink. Erst mit Ihrer Bestätigung "
-"löschen wir den mit dem jeweiligen Link verknüpften Eintrag."
+"Saisissez votre adresse e-mail. Nous vous envoyons un lien de confirmation distinct pour chaque "
+"profil d’adresse enregistré et chaque demande de couverture ouverte. Nous supprimons l’entrée "
+"liée à chaque lien uniquement après votre confirmation."
 
 #: equipment.py:45
 msgid "Trennung vom privaten Netz mit dem Betreiber prüfen."
@@ -10156,8 +10154,8 @@ msgid ""
 "Wir haben den mit diesem Link verknüpften Eintrag (Adressprofil oder offene Gebietsanfrage) nicht"
 " gelöscht. Der Link ist möglicherweise abgelaufen. Fordern Sie einen neuen Bestätigungslink an."
 msgstr ""
-"Wir haben den mit diesem Link verknüpften Eintrag (Adressprofil oder offene Gebietsanfrage) nicht"
-" gelöscht. Der Link ist möglicherweise abgelaufen. Fordern Sie einen neuen Bestätigungslink an."
+"Nous n’avons pas supprimé l’entrée liée à ce lien (profil d’adresse ou demande de couverture "
+"ouverte). Le lien a peut-être expiré. Demandez un nouveau lien de confirmation."
 
 #: templates/leg_verzeichnis/beanspruchen.html:20
 msgid ""
