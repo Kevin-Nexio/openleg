@@ -1,13 +1,19 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# ruff: noqa: F811
 """Session rotation keeps only a validated presentation-language preference."""
 
 from unittest.mock import MagicMock
 
 import pytest
 
-import app
-from tests.test_i18n import web  # noqa: F401
+from tests import test_i18n
+
+app_module = test_i18n.app_module
+isolated_environment = test_i18n.isolated_environment
+web = test_i18n.web
+
+# Imported route seams also read configuration on a cold Python process.
+with test_i18n._synthetic_environment():
+    import app
 
 
 def test_french_survives_login_exchange_and_logout_without_old_identity(

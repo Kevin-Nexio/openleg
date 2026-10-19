@@ -6,14 +6,19 @@ from unittest.mock import MagicMock
 
 import pytest
 
-import app
-import meter_data
-import registration
-import security_utils
-import tenant
 from tests import test_i18n
 
+isolated_environment = test_i18n.isolated_environment
+app_module = test_i18n.app_module
 web = test_i18n.web
+
+# Imported route seams also read configuration on a cold Python process.
+with test_i18n._synthetic_environment():
+    import app
+    import meter_data
+    import registration
+    import security_utils
+    import tenant
 
 
 @pytest.fixture

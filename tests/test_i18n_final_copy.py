@@ -6,8 +6,15 @@ from html import unescape
 
 import pytest
 
-import municipality
-from tests.test_i18n import web
+from tests import test_i18n
+
+app_module = test_i18n.app_module
+isolated_environment = test_i18n.isolated_environment
+web = test_i18n.web
+
+with test_i18n._synthetic_environment():
+    import municipality
+
 
 __all__ = ["web"]
 

@@ -5,11 +5,15 @@ import xml.etree.ElementTree as ET
 
 import pytest
 
-import rangliste
-from ranking import Ranking
 from tests import test_i18n
 
+isolated_environment = test_i18n.isolated_environment
+app_module = test_i18n.app_module
 web = test_i18n.web
+
+with test_i18n._synthetic_environment():
+    import rangliste
+    from ranking import Ranking
 
 
 @pytest.mark.parametrize("path", ["/rangliste", "/rangliste/fortschritte"])

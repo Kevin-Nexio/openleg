@@ -1,5 +1,4 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# ruff: noqa: F811
 """Financial and LEG presentation regressions without external services."""
 
 from copy import deepcopy
@@ -9,15 +8,22 @@ from unittest.mock import MagicMock
 import pytest
 from flask import render_template
 
-import billing_policy
-import billing_workspace
-import community_access
-import dashboard
-import database as db
-import quartierakku
 from i18n import gettext as _
-from tests.test_dashboard_access_routes import _set_session
-from tests.test_i18n import web  # noqa: F401
+from tests import test_i18n
+
+app_module = test_i18n.app_module
+isolated_environment = test_i18n.isolated_environment
+web = test_i18n.web
+
+# Imported route seams also read configuration on a cold Python process.
+with test_i18n._synthetic_environment():
+    import billing_policy
+    import billing_workspace
+    import community_access
+    import dashboard
+    import database as db
+    import quartierakku
+    from tests.test_dashboard_access_routes import _set_session
 
 
 def _workspace():

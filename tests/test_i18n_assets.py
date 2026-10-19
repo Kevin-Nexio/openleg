@@ -8,6 +8,8 @@ import pytest
 
 from tests import test_i18n
 
+isolated_environment = test_i18n.isolated_environment
+app_module = test_i18n.app_module
 web = test_i18n.web
 
 ROOT = Path(__file__).resolve().parents[1]

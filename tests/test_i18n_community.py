@@ -7,6 +7,9 @@ import pytest
 from flask import Flask, render_template
 
 from i18n import init_app
+from tests import test_i18n
+
+isolated_environment = test_i18n.isolated_environment
 
 ROOT = Path(__file__).resolve().parents[1]
 

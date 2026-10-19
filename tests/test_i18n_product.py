@@ -1,4 +1,3 @@
-# ruff: noqa: F811
 # SPDX-License-Identifier: AGPL-3.0-or-later
 """Product flows translate their presentation while preserving domain values."""
 
@@ -7,12 +6,19 @@ import re
 from html import unescape
 from unittest.mock import MagicMock
 
-import app
-import community_access
-import dashboard
-import formation_wizard
-from tests.test_dashboard_access_routes import _set_session
-from tests.test_i18n import web  # noqa: F401
+from tests import test_i18n
+
+app_module = test_i18n.app_module
+isolated_environment = test_i18n.isolated_environment
+web = test_i18n.web
+
+# Imported route seams also read configuration on a cold Python process.
+with test_i18n._synthetic_environment():
+    import app
+    import community_access
+    import dashboard
+    import formation_wizard
+    from tests.test_dashboard_access_routes import _set_session
 
 
 def test_french_resident_demo_has_translated_checks_actions_and_accessibility(web):

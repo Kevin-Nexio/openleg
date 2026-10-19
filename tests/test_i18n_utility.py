@@ -6,8 +6,13 @@ from pathlib import Path
 import pytest
 from flask import Flask
 
-import utility_portal
 from i18n import init_app
+from tests import test_i18n
+
+isolated_environment = test_i18n.isolated_environment
+
+with test_i18n._synthetic_environment():
+    import utility_portal
 
 
 @pytest.fixture
