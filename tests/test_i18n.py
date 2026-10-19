@@ -1,6 +1,9 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 """Language selection through the real application and safe gettext output."""
 
+import os
+from contextlib import contextmanager
+from unittest.mock import patch
 from urllib.parse import parse_qs, urlsplit
 
 import pytest
@@ -8,23 +11,65 @@ from flask import Flask, render_template_string
 from flask_babel import force_locale
 from flask_babel import gettext as _
 
-import app
+# Pin import-time dependency settings as well as build_config/request settings.
+# Clearing the mapping also prevents newly introduced settings from inheriting
+# host values. patch.dict restores the caller's entire environment on exit.
+_TEST_ENVIRONMENT = {
+    "DATABASE_URL": "",
+    "DB_POOL_MIN": "2",
+    "DB_POOL_MAX": "10",
+    "REDIS_URL": "",
+    "SMTP_HOST": "localhost",
+    "SMTP_PORT": "587",
+    "SMTP_USER": "",
+    "SMTP_PASSWORD": "",
+    "FROM_EMAIL": "noreply@example.invalid",
+    "DEEPSIGN_API_URL": "https://example.invalid",
+    "DEEPSIGN_API_KEY": "",
+    "DEEPSIGN_WEBHOOK_SECRET": "",
+    "SECRET_KEY": "i18n-test-only",
+    "APP_BASE_URL": "http://localhost",
+    "PUBLIC_SITE_URL": "https://openleg.ch",
+    "ALLOWED_HOSTS": "localhost,127.0.0.1",
+    "ADMIN_EMAIL": "admin@example.invalid",
+    "ADMIN_TOKEN": "",
+    "INTERNAL_TOKEN": "",
+    "CRON_SECRET": "",
+    "AGENTMAIL_WEBHOOK_SECRET": "",
+    "SESSION_COOKIE_SECURE": "false",
+    "SESSION_COOKIE_SAMESITE": "Lax",
+    "PERMANENT_SESSION_LIFETIME": "3600",
+    "DASHBOARD_ACCESS_TOKEN_TTL_SECONDS": "900",
+    "DASHBOARD_EMAIL_TOKEN_TTL_SECONDS": "86400",
+    "BABEL_DEFAULT_LOCALE": "de_CH",
+    "MATOMO_SITE_ID": "",
+    "GA4_MEASUREMENT_ID": "",
+}
+
+
+@contextmanager
+def _synthetic_environment():
+    with patch.dict(os.environ, _TEST_ENVIRONMENT, clear=True):
+        yield
+
+
+@pytest.fixture(autouse=True)
+def isolated_environment():
+    with _synthetic_environment():
+        yield
 
 
 @pytest.fixture
-def web(monkeypatch):
-    # App configuration is explicit: no production environment or services.
-    for name in (
-        "DATABASE_URL",
-        "ADMIN_TOKEN",
-        "INTERNAL_TOKEN",
-        "CRON_SECRET",
-        "REDIS_URL",
-        "MATOMO_SITE_ID",
-        "SESSION_COOKIE_SECURE",
-    ):
-        monkeypatch.setenv(name, "")
-    return app.create_app(
+def app_module(isolated_environment):
+    # Import only after isolation, including in a fresh pytest process.
+    import app
+
+    return app
+
+
+@pytest.fixture
+def web(app_module):
+    return app_module.create_app(
         {
             "TESTING": True,
             "SECRET_KEY": "i18n-test-only",
@@ -123,8 +168,10 @@ def test_i18n_initialization_does_not_require_an_application_factory():
         ("fr-CH", "fr-CH"),
     ],
 )
-def test_factory_uses_normalized_environment_display_locale(monkeypatch, raw, expected):
-    _locale_factory(monkeypatch, raw, None, expected)
+def test_factory_uses_normalized_environment_display_locale(
+    app_module, monkeypatch, raw, expected
+):
+    _locale_factory(app_module, monkeypatch, raw, None, expected)
 
 
 @pytest.mark.parametrize(
@@ -138,16 +185,19 @@ def test_factory_uses_normalized_environment_display_locale(monkeypatch, raw, ex
     ],
 )
 def test_factory_normalizes_explicit_display_locale_override(
-    monkeypatch, override, expected
+    app_module, monkeypatch, override, expected
 ):
-    _locale_factory(monkeypatch, "fr_CH", override, expected)
+    _locale_factory(app_module, monkeypatch, "fr_CH", override, expected)
 
 
 @pytest.mark.parametrize("invalid", ["not-a-locale", "it_CH", "fr_CH/../../"])
 @pytest.mark.parametrize("source", ["environment", "override"])
-def test_factory_still_rejects_unsupported_display_locale(monkeypatch, invalid, source):
+def test_factory_still_rejects_unsupported_display_locale(
+    app_module, monkeypatch, invalid, source
+):
     with pytest.raises(ValueError, match="BABEL_DEFAULT_LOCALE must be"):
         _locale_factory(
+            app_module,
             monkeypatch,
             invalid if source == "environment" else "de_CH",
             invalid if source == "override" else None,
@@ -155,22 +205,12 @@ def test_factory_still_rejects_unsupported_display_locale(monkeypatch, invalid, 
         )
 
 
-def test_factory_rejects_non_string_locale_override(monkeypatch):
+def test_factory_rejects_non_string_locale_override(app_module, monkeypatch):
     with pytest.raises(ValueError, match="BABEL_DEFAULT_LOCALE must be"):
-        _locale_factory(monkeypatch, "de_CH", 123, None)
+        _locale_factory(app_module, monkeypatch, "de_CH", 123, None)
 
 
-def _locale_factory(monkeypatch, raw, override, expected):
-    for name in (
-        "DATABASE_URL",
-        "REDIS_URL",
-        "ADMIN_TOKEN",
-        "INTERNAL_TOKEN",
-        "CRON_SECRET",
-        "MATOMO_SITE_ID",
-        "SESSION_COOKIE_SECURE",
-    ):
-        monkeypatch.setenv(name, "")
+def _locale_factory(app_module, monkeypatch, raw, override, expected):
     if raw is None:
         monkeypatch.delenv("BABEL_DEFAULT_LOCALE", raising=False)
     else:
@@ -185,7 +225,7 @@ def _locale_factory(monkeypatch, raw, override, expected):
     }
     if override is not None:
         config["BABEL_DEFAULT_LOCALE"] = override
-    web = app.create_app(config, load_environment=False, check_database=False)
+    web = app_module.create_app(config, load_environment=False, check_database=False)
     response = web.test_client().get("/login")
     assert response.status_code == 200
     assert response.headers["Content-Language"] == expected
@@ -312,3 +352,61 @@ def test_cached_templates_keep_locale_dependent_filters_request_local(web, seque
         assert period == ("juillet 2026" if french else "Juli 2026")
         assert rate == ("15.00 ct./kWh" if french else "15.00 Rp./kWh")
         assert url == ("/dashboard?lang=fr-CH" if french else "/dashboard")
+
+
+def test_locale_fixture_pins_effective_configuration(web):
+    """Host values must not change sessions, auth, URLs or the default locale."""
+    from datetime import timedelta
+
+    assert web.config["PERMANENT_SESSION_LIFETIME"] == timedelta(seconds=3600)
+    assert web.config["SECRET_KEY"] == "i18n-test-only"
+    assert web.config["SESSION_COOKIE_SECURE"] is False
+    assert web.config["SESSION_COOKIE_SAMESITE"] == "Lax"
+    assert web.config["DASHBOARD_ACCESS_TOKEN_TTL_SECONDS"] == 900
+    assert web.config["DASHBOARD_EMAIL_TOKEN_TTL_SECONDS"] == 86400
+    assert web.config["APP_BASE_URL"] == "http://localhost"
+    assert web.config["PUBLIC_SITE_URL"] == "https://openleg.ch"
+    assert web.config["ALLOWED_HOSTS"] == ["localhost", "127.0.0.1"]
+    assert web.config["MATOMO_SITE_ID"] == ""
+    assert web.config["BABEL_DEFAULT_LOCALE"] == "de_CH"
+    for name in ("ADMIN_TOKEN", "INTERNAL_TOKEN", "CRON_SECRET", "GA4_MEASUREMENT_ID"):
+        assert os.environ[name] == ""
+    assert "UNRECOGNIZED_HOST_SETTING" not in os.environ
+    client = web.test_client()
+    assert client.get("/login?lang=fr-CH").headers["Content-Language"] == "fr-CH"
+    assert client.get("/login").headers["Content-Language"] == "fr-CH"
+    assert client.get("/admin/overview").status_code == 404
+    assert (
+        client.get(
+            "/admin/overview", headers={"X-Admin-Token": "synthetic-outside-admin"}
+        ).status_code
+        == 404
+    )
+
+
+@pytest.mark.parametrize("raises", [False, True])
+def test_synthetic_environment_restores_caller_even_on_error(monkeypatch, raises):
+    monkeypatch.setenv("PERMANENT_SESSION_LIFETIME", "sentinel")
+    monkeypatch.setenv("BABEL_DEFAULT_LOCALE", "it_CH")
+    monkeypatch.setenv("UNRECOGNIZED_HOST_SETTING", "outside")
+    before = dict(os.environ)
+
+    def exercise():
+        with _synthetic_environment():
+            assert dict(os.environ) == _TEST_ENVIRONMENT
+            os.environ["BABEL_DEFAULT_LOCALE"] = "fr_CH"
+            if raises:
+                raise RuntimeError("synthetic test failure")
+
+    if raises:
+        with pytest.raises(RuntimeError, match="synthetic test failure"):
+            exercise()
+    else:
+        exercise()
+    assert dict(os.environ) == before
+
+
+def test_invalid_configuration_inside_isolation_is_not_hidden(app_module, monkeypatch):
+    monkeypatch.setenv("PERMANENT_SESSION_LIFETIME", "sentinel")
+    with pytest.raises(ValueError, match="invalid literal for int"):
+        app_module.create_app(load_environment=False, check_database=False)
