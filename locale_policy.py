@@ -12,6 +12,7 @@ _ALIASES = {
 
 
 def normalize_locale(value):
+    """Return the canonical identifier for a supported alias, or None."""
     return _ALIASES.get(value) if isinstance(value, str) else None
 
 

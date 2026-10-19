@@ -126,7 +126,7 @@ def ngettext(singular, plural, number, **variables):
 
 
 def select_locale():
-    """An explicit choice wins, then the signed session, then instance default.
+    """Resolve explicit choice, signed session, tenant, then installation default.
 
     Keep German as the existing default instead of silently switching existing
     installations based on a browser's Accept-Language header.

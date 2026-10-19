@@ -112,6 +112,86 @@ def test_i18n_initialization_does_not_require_an_application_factory():
         assert _("Sprache") == "Sprache"
 
 
+@pytest.mark.parametrize(
+    "raw,expected",
+    [
+        (None, "de-CH"),
+        ("", "de-CH"),
+        ("  ", "de-CH"),
+        ("fr_CH ", "fr-CH"),
+        ("de_CH", "de-CH"),
+        ("fr-CH", "fr-CH"),
+    ],
+)
+def test_factory_uses_normalized_environment_display_locale(monkeypatch, raw, expected):
+    _locale_factory(monkeypatch, raw, None, expected)
+
+
+@pytest.mark.parametrize(
+    "override,expected",
+    [
+        ("", "de-CH"),
+        (" ", "de-CH"),
+        (" de_CH ", "de-CH"),
+        ("fr_CH ", "fr-CH"),
+        ("fr-CH", "fr-CH"),
+    ],
+)
+def test_factory_normalizes_explicit_display_locale_override(
+    monkeypatch, override, expected
+):
+    _locale_factory(monkeypatch, "fr_CH", override, expected)
+
+
+@pytest.mark.parametrize("invalid", ["not-a-locale", "it_CH", "fr_CH/../../"])
+@pytest.mark.parametrize("source", ["environment", "override"])
+def test_factory_still_rejects_unsupported_display_locale(monkeypatch, invalid, source):
+    with pytest.raises(ValueError, match="BABEL_DEFAULT_LOCALE must be"):
+        _locale_factory(
+            monkeypatch,
+            invalid if source == "environment" else "de_CH",
+            invalid if source == "override" else None,
+            None,
+        )
+
+
+def test_factory_rejects_non_string_locale_override(monkeypatch):
+    with pytest.raises(ValueError, match="BABEL_DEFAULT_LOCALE must be"):
+        _locale_factory(monkeypatch, "de_CH", 123, None)
+
+
+def _locale_factory(monkeypatch, raw, override, expected):
+    for name in (
+        "DATABASE_URL",
+        "REDIS_URL",
+        "ADMIN_TOKEN",
+        "INTERNAL_TOKEN",
+        "CRON_SECRET",
+        "MATOMO_SITE_ID",
+        "SESSION_COOKIE_SECURE",
+    ):
+        monkeypatch.setenv(name, "")
+    if raw is None:
+        monkeypatch.delenv("BABEL_DEFAULT_LOCALE", raising=False)
+    else:
+        monkeypatch.setenv("BABEL_DEFAULT_LOCALE", raw)
+    config = {
+        "TESTING": True,
+        "SECRET_KEY": "synthetic-locale-default",
+        "APP_BASE_URL": "http://localhost",
+        "PUBLIC_SITE_URL": "http://localhost",
+        "RATELIMIT_STORAGE_URI": "memory://",
+        "SESSION_COOKIE_SECURE": False,
+    }
+    if override is not None:
+        config["BABEL_DEFAULT_LOCALE"] = override
+    web = app.create_app(config, load_environment=False, check_database=False)
+    response = web.test_client().get("/login")
+    assert response.status_code == 200
+    assert response.headers["Content-Language"] == expected
+    assert f'<html lang="{expected}">' in response.text
+
+
 def test_localized_links_preserve_tokens_filters_fragments_and_german_defaults(web):
     from i18n import localized_url
 

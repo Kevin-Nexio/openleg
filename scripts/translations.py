@@ -21,6 +21,7 @@ NAMED_FORMAT = re.compile(r"%\([^)]+\)[#0 +.\-0-9]*[diouxXeEfFgGcrsa]")
 
 
 def extract(destination):
+    """Extract repository messages and normalize the generated POT deterministically."""
     subprocess.run(
         [
             sys.executable,
@@ -54,6 +55,7 @@ def extract(destination):
 
 
 def normalize_flags(catalog):
+    """Keep named-format validation without misclassifying literal percent prose."""
     for message in catalog:
         identifiers = message.id if isinstance(message.id, tuple) else (message.id,)
         # Babel mistakes literal prose such as '40% ohne' for '% o'. Our
@@ -63,6 +65,13 @@ def normalize_flags(catalog):
 
 
 def validate(catalog, expected):
+    """Require complete translations and matching placeholders for each source form.
+
+    As in Babel, translation form zero corresponds to the singular msgid and
+    every later form to the plural msgid, including languages with more than
+    two forms. Keep the stricter rule that required named parameters cannot
+    disappear. NAMED_FORMAT is a regex over repository text, not an XPath query.
+    """
     actual = {(message.id, message.context) for message in catalog if message.id}
     missing = {
         (message.id, message.context) for message in expected if message.id
@@ -79,12 +88,9 @@ def validate(catalog, expected):
         if "fuzzy" in message.flags or not all(values):
             problems.append(f"Untranslated or fuzzy: {message.id}")
         identifiers = message.id if isinstance(message.id, tuple) else (message.id,)
-        source_parameters = {
-            parameter
-            for text in identifiers
-            for parameter in NAMED_FORMAT.findall(text)
-        }
-        for value in values:
+        for index, value in enumerate(values):
+            source = identifiers[min(index, len(identifiers) - 1)]
+            source_parameters = set(NAMED_FORMAT.findall(source))
             if set(NAMED_FORMAT.findall(value or "")) != source_parameters:
                 problems.append(f"Named placeholder mismatch: {message.id}: {value}")
     problems.extend(f"{message.id}: {errors}" for message, errors in catalog.check())
@@ -99,7 +105,7 @@ def build_svg_assets(*, check):
     if not sources:
         return
     environment = Environment(
-        loader=FileSystemLoader(directory),
+        loader=FileSystemLoader(directory, encoding="utf-8"),
         autoescape=True,
         extensions=["jinja2.ext.i18n"],
         keep_trailing_newline=True,
@@ -120,11 +126,14 @@ def build_svg_assets(*, check):
                     destination.parent / locale.replace("_", "-") / destination.name
                 )
             if check:
-                if not destination.exists() or destination.read_text() != rendered:
+                if (
+                    not destination.exists()
+                    or destination.read_text(encoding="utf-8") != rendered
+                ):
                     raise ValueError(f"Localized asset is stale: {destination}")
             else:
                 destination.parent.mkdir(parents=True, exist_ok=True)
-                destination.write_text(rendered)
+                destination.write_text(rendered, encoding="utf-8")
 
 
 def main():
