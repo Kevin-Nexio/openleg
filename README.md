@@ -114,6 +114,11 @@ Public data fetchers live in `public_data.py`. Database persistence uses `databa
 
 ### Contributing
 
+German and Swiss French are available through the language selector. To default
+a self-hosted instance to French, set `BABEL_DEFAULT_LOCALE=fr_CH`. See the
+[internationalization guide](docs/internationalization.md) for translation coverage,
+email-language behavior, catalog maintenance and adding further languages.
+
 New to the codebase? Follow the [contributor onboarding guide](docs/contributor-onboarding.md).
 
 Open an issue before a larger change. Keep the pull request small, start with a failing test, and run:

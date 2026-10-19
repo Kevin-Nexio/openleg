@@ -217,12 +217,8 @@ def test_registration_happy_path_contract(
     db.track_event.assert_called_once_with(
         "registration", "building-1", {"type": user_type, "city_id": "zurich"}
     )
-    assert [
-        (thread.target, thread.args, thread.daemon, thread.started)
-        for thread in threads
-    ] == [
+    assert [(thread.args, thread.daemon, thread.started) for thread in threads] == [
         (
-            app_module.send_confirmation_email,
             (
                 "user@example.ch",
                 db.save_building.call_args.kwargs["verification_token"].join(
@@ -235,6 +231,19 @@ def test_registration_happy_path_contract(
             True,
         ),
     ]
+
+    # The deferred target must restore presentation context after the request.
+    from flask import has_app_context, has_request_context
+    from flask_babel import get_locale
+
+    observed = []
+    app_module.send_confirmation_email.side_effect = lambda *args: observed.append(
+        (has_app_context(), has_request_context(), str(get_locale()), args)
+    )
+    assert not has_request_context()
+    threads[0].target(*threads[0].args)
+    assert observed == [(True, False, "de_CH", threads[0].args)]
+    app_module.send_confirmation_email.assert_called_once_with(*threads[0].args)
 
 
 @pytest.mark.parametrize("url", ["/api/register_anonymous", "/api/register_full"])

@@ -6,12 +6,17 @@ Handles scheduled email sequences for user nurturing.
 
 import logging
 import time
+from contextlib import nullcontext
 
 from flask import current_app, has_app_context, render_template
+from flask_babel import force_locale
 
 import access_token
 import database as db
 from email_utils import send_email
+from i18n import gettext as _
+from i18n import normalize_locale
+from translation_markers import gettext_noop
 
 logger = logging.getLogger(__name__)
 
@@ -21,22 +26,25 @@ def get_email_sequence(platform_name="OpenLEG"):
     return {
         "day_0_welcome": {
             "delay_days": 0,
-            "subject": f"Willkommen bei {platform_name}! Ihre Nachbarn warten",
+            "subject": _(
+                "Willkommen bei %(platform_name)s! Ihre Nachbarn warten",
+                platform_name=platform_name,
+            ),
             "template": "emails/day_0_welcome.html",
         },
         "day_3_smartmeter": {
             "delay_days": 3,
-            "subject": "Schnelle Frage: Haben Sie einen Smart Meter?",
+            "subject": _("Schnelle Frage: Haben Sie einen Smart Meter?"),
             "template": "emails/day_3_smartmeter.html",
         },
         "day_7_consumption": {
             "delay_days": 7,
-            "subject": "Optimieren Sie Ihr LEG-Matching",
+            "subject": _("Optimieren Sie Ihr LEG-Matching"),
             "template": "emails/day_7_consumption.html",
         },
         "day_14_formation": {
             "delay_days": 14,
-            "subject": "Ihre LEG-Gemeinschaft kann starten",
+            "subject": _("Ihre LEG-Gemeinschaft kann starten"),
             "template": "emails/day_14_formation.html",
         },
     }
@@ -45,7 +53,7 @@ def get_email_sequence(platform_name="OpenLEG"):
 # Standalone trigger templates (not part of drip sequence)
 TRIGGER_TEMPLATES = {
     "formation_nudge": {
-        "subject": "Ihre LEG-Gründung wartet",
+        "subject": gettext_noop("Ihre LEG-Gründung wartet"),
         "template": "emails/formation_nudge.html",
     },
 }
@@ -72,6 +80,7 @@ def notify_new_municipality_interest(
     municipality_name: str,
     newcomer_email: str,
     base_url: str = "https://openleg.ch",
+    locale: str | None = None,
 ):
     """Tell existing verified participants that local demand has grown."""
     recipients = db.get_verified_interest_recipients(
@@ -80,14 +89,37 @@ def notify_new_municipality_interest(
     total = db.get_interest_count(int(bfs_number))
     if total is None:
         total = 1
-    subject = f"Neue LEG-Interessenmeldung in {municipality_name}"
-    body = (
-        f"In {municipality_name} gibt es jetzt {total} bestätigte Interessierte "
-        "für eine Lokale Elektrizitätsgemeinschaft.\n\n"
-        "Wir geben keine Namen, Adressen oder Kontaktdaten weiter. Sobald eine "
-        "passende Gruppe entsteht, erhalten Sie die nächsten Schritte.\n\n"
-        f"Abmelden: {base_url.rstrip('/')}/unsubscribe"
+    # Until recipient language preferences are persisted, background
+    # notifications use an explicit caller locale or the application default.
+    email_locale = (
+        normalize_locale(locale)
+        or (
+            normalize_locale(current_app.config.get("BABEL_DEFAULT_LOCALE"))
+            if has_app_context()
+            else None
+        )
+        or "de_CH"
     )
+    locale_context = (
+        force_locale(email_locale)
+        if has_app_context() and "babel" in current_app.extensions
+        else nullcontext()
+    )
+    with locale_context:
+        subject = _(
+            "Neue LEG-Interessenmeldung in %(municipality_name)s",
+            municipality_name=municipality_name,
+        )
+        body = _(
+            "In %(municipality_name)s gibt es jetzt %(total)s bestätigte Interessierte "
+            "für eine Lokale Elektrizitätsgemeinschaft.\n\n"
+            "Wir geben keine Namen, Adressen oder Kontaktdaten weiter. Sobald eine "
+            "passende Gruppe entsteht, erhalten Sie die nächsten Schritte.\n\n"
+            "Abmelden: %(unsubscribe_url)s",
+            municipality_name=municipality_name,
+            total=total,
+            unsubscribe_url=f"{base_url.rstrip('/')}/unsubscribe",
+        )
     sent = 0
     failed = 0
     seen = set()
@@ -170,7 +202,22 @@ def process_email_queue(app=None):
 
         # Render template with tenant context
         try:
-            with app.app_context():
+            # Queued messages must not inherit the language of a cron HTTP request.
+            # Existing rows have no stored preference: use an explicit row/tenant
+            # locale when supplied, otherwise the configured German default.
+            locale = (
+                normalize_locale(item.get("locale"))
+                or normalize_locale(tenant.get("locale"))
+                or normalize_locale(app.config.get("BABEL_DEFAULT_LOCALE"))
+                or "de_CH"
+            )
+            with (
+                app.app_context(),
+                force_locale(locale) if "babel" in app.extensions else nullcontext(),
+            ):
+                config = get_email_sequence(tenant.get("platform_name", "OpenLEG"))[
+                    template_key
+                ]
                 html_body = render_template(
                     config["template"],
                     email=item["email"],
@@ -185,7 +232,7 @@ def process_email_queue(app=None):
                     city_name=tenant.get("city_name", "Zürich"),
                     primary_color=tenant.get("primary_color", "#c7021a"),
                     contact_email=tenant.get("contact_email", "hallo@openleg.ch"),
-                    utility_name=tenant.get("utility_name", "Netzbetreiber"),
+                    utility_name=tenant.get("utility_name") or _("Netzbetreiber"),
                 )
         except Exception as e:
             logger.error(f"[EMAIL_AUTO] Template render error for {template_key}: {e}")

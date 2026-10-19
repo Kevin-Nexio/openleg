@@ -5,6 +5,8 @@ Callers ask for one capability.  Legacy ``admin`` memberships retain full
 access while scoped roles let a community delegate a narrower responsibility.
 """
 
+from translation_markers import gettext_noop as _N
+
 ADMIN = "admin"
 MEMBERSHIP = "membership"
 DOCUMENTS = "documents"
@@ -54,13 +56,13 @@ _CAPABILITIES = {
 }
 
 ROLE_LABELS = {
-    ADMIN: "Administration",
-    MEMBERSHIP: "Mitgliederverwaltung",
-    DOCUMENTS: "Dokumente",
-    METERING: "Messdaten",
-    BILLING_PREPARER: "Abrechnung vorbereiten",
-    BILLING_APPROVER: "Abrechnung freigeben",
-    AUDITOR: "Prüfung",
+    ADMIN: _N("Administration"),
+    MEMBERSHIP: _N("Mitgliederverwaltung"),
+    DOCUMENTS: _N("Dokumente"),
+    METERING: _N("Messdaten"),
+    BILLING_PREPARER: _N("Abrechnung vorbereiten"),
+    BILLING_APPROVER: _N("Abrechnung freigeben"),
+    AUDITOR: _N("Prüfung"),
 }
 
 
@@ -101,9 +103,9 @@ def capabilities_for(member: dict | None) -> frozenset[str]:
 def validate_roles(roles) -> tuple[str, ...]:
     """Validate and canonicalise a role collection for persistence."""
     if isinstance(roles, str) or roles is None:
-        raise ValueError("Rollen müssen als Liste angegeben werden.")
+        raise ValueError(_N("Rollen müssen als Liste angegeben werden."))
     values = tuple(sorted(set(roles)))
     unknown = set(values) - ROLES
     if unknown:
-        raise ValueError("Unbekannte LEG-Rolle: " + ", ".join(sorted(unknown)))
+        raise ValueError(_N("Unbekannte LEG-Rolle: ") + ", ".join(sorted(unknown)))
     return values

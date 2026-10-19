@@ -21,6 +21,7 @@ from flask import (
     send_from_directory,
     session,
 )
+from flask_babel import force_locale
 from flask_talisman import Talisman
 
 import access_token  # noqa: F401
@@ -34,6 +35,7 @@ import email_automation  # noqa: F401
 import formation_guide
 import formation_wizard
 import homepage_view_model
+import i18n
 import interest_confirmation
 import interest_intake
 import private_http
@@ -47,6 +49,7 @@ from cron import cron_bp
 from email_utils import send_email
 from equipment_routes import equipment_bp
 from health import health_bp
+from i18n import gettext as _
 from leg_registry import registry_api_bp
 from municipality import municipality_bp, pilot_bp
 from neighbor_view import collect_building_locations, find_provisional_matches
@@ -57,6 +60,7 @@ from security_extensions import RATE_LIMIT_RETRY_AFTER_SECONDS, limiter
 from security_utils import log_security_event
 from self_host import self_host_bp
 from telemetry_routes import telemetry_bp
+from translation_markers import gettext_noop
 from utility_portal import utility_bp
 
 logger = logging.getLogger(__name__)
@@ -66,67 +70,88 @@ main_bp = Blueprint("main", __name__)
 
 LEG_FORMATION_FAQS = (
     {
-        "question": "Brauchen die Teilnehmenden eigene Smart Meter?",
+        "question": gettext_noop("Brauchen die Teilnehmenden eigene Smart Meter?"),
         "answer": (
-            "Nein. Vorhandene gesetzeskonforme Smart Meter des "
-            "Verteilnetzbetreibers werden weiterverwendet. Fehlende erforderliche "
-            "Geräte installiert der Verteilnetzbetreiber nach einem gültigen Antrag. "
-            "Regulierte Messtarife können weiterhin anfallen."
+            gettext_noop(
+                "Nein. Vorhandene gesetzeskonforme Smart Meter des "
+                "Verteilnetzbetreibers werden weiterverwendet. Fehlende erforderliche "
+                "Geräte installiert der Verteilnetzbetreiber nach einem gültigen Antrag. "
+                "Regulierte Messtarife können weiterhin anfallen."
+            )
         ),
     },
     {
-        "question": "Kann eine LEG mehrere Gemeinden oder VNB-Gebiete umfassen?",
+        "question": gettext_noop(
+            "Kann eine LEG mehrere Gemeinden oder VNB-Gebiete umfassen?"
+        ),
         "answer": (
-            "Nein. Eine LEG bleibt innerhalb einer politischen Gemeinde und im "
-            "Netzgebiet eines Verteilnetzbetreibers. Für mehrere Gemeinden oder "
-            "VNB-Gebiete braucht es separate lokale LEGs."
+            gettext_noop(
+                "Nein. Eine LEG bleibt innerhalb einer politischen Gemeinde und im "
+                "Netzgebiet eines Verteilnetzbetreibers. Für mehrere Gemeinden oder "
+                "VNB-Gebiete braucht es separate lokale LEGs."
+            )
         ),
     },
     {
-        "question": "Wer ist für die Abrechnung zuständig?",
+        "question": gettext_noop("Wer ist für die Abrechnung zuständig?"),
         "answer": (
-            "Der Verteilnetzbetreiber rechnet Netznutzung und Messung ab, bei "
-            "Teilnehmenden in der Grundversorgung auch den übrigen Strombezug. Die "
-            "LEG oder ihr Dienstleister rechnet den innerhalb der Gemeinschaft "
-            "ausgetauschten Strom ab."
+            gettext_noop(
+                "Der Verteilnetzbetreiber rechnet Netznutzung und Messung ab, bei "
+                "Teilnehmenden in der Grundversorgung auch den übrigen Strombezug. Die "
+                "LEG oder ihr Dienstleister rechnet den innerhalb der Gemeinschaft "
+                "ausgetauschten Strom ab."
+            )
         ),
     },
     {
-        "question": "Darf ich OpenLEG installieren, anpassen oder forken?",
+        "question": gettext_noop(
+            "Darf ich OpenLEG installieren, anpassen oder forken?"
+        ),
         "answer": (
-            "Ja. Unter der Lizenz AGPL-3.0-or-later dürfen Sie OpenLEG "
-            "installieren, nutzen und anpassen. Auch ein Fork ist erlaubt. "
-            "Wenn Sie eine veränderte Version über ein Netzwerk anbieten, müssen "
-            "Sie den Nutzenden den entsprechenden Quellcode zugänglich machen. "
-            "Das ist eine praktische Zusammenfassung und keine Rechtsberatung."
+            gettext_noop(
+                "Ja. Unter der Lizenz AGPL-3.0-or-later dürfen Sie OpenLEG "
+                "installieren, nutzen und anpassen. Auch ein Fork ist erlaubt. "
+                "Wenn Sie eine veränderte Version über ein Netzwerk anbieten, müssen "
+                "Sie den Nutzenden den entsprechenden Quellcode zugänglich machen. "
+                "Das ist eine praktische Zusammenfassung und keine Rechtsberatung."
+            )
         ),
         "links": (
             {
-                "label": "Lizenz lesen",
+                "label": gettext_noop("Lizenz lesen"),
                 "href": "https://github.com/Open-LEG-ch/openleg/blob/main/LICENSE",
             },
             {
-                "label": "Repository öffnen",
+                "label": gettext_noop("Repository öffnen"),
                 "href": "https://github.com/Open-LEG-ch/openleg",
             },
-            {"label": "Anleitung zum eigenen Betrieb", "href": "/self-host"},
+            {
+                "label": gettext_noop("Anleitung zum eigenen Betrieb"),
+                "href": "/self-host",
+            },
         ),
     },
     {
-        "question": "Ist OpenLEG an einen bestimmten Netzbetreiber gebunden?",
+        "question": gettext_noop(
+            "Ist OpenLEG an einen bestimmten Netzbetreiber gebunden?"
+        ),
         "answer": (
-            "OpenLEG ist ohne Bindung an einen bestimmten VNB konzipiert. "
-            "Noch ist nicht jede VNB-Anbindung fertig umgesetzt. Anmeldung und "
-            "Datenlieferung müssen pro VNB konfiguriert werden."
+            gettext_noop(
+                "OpenLEG ist ohne Bindung an einen bestimmten VNB konzipiert. "
+                "Noch ist nicht jede VNB-Anbindung fertig umgesetzt. Anmeldung und "
+                "Datenlieferung müssen pro VNB konfiguriert werden."
+            )
         ),
     },
     {
-        "question": "Kann OpenLEG unsere Gruppe persönlich unterstützen?",
+        "question": gettext_noop("Kann OpenLEG unsere Gruppe persönlich unterstützen?"),
         "answer": (
-            "Vorträge, Workshops und Projektunterstützung bieten wir nach "
-            "vorgängiger Vereinbarung gegen Honorar an."
+            gettext_noop(
+                "Vorträge, Workshops und Projektunterstützung bieten wir nach "
+                "vorgängiger Vereinbarung gegen Honorar an."
+            )
         ),
-        "contact_label": "Unterstützung anfragen",
+        "contact_label": gettext_noop("Unterstützung anfragen"),
     },
 )
 
@@ -137,8 +162,10 @@ def handle_rate_limit(_error):
         jsonify(
             {
                 "error": (
-                    "Zu viele Anfragen. Bitte warten Sie eine Minute und "
-                    "versuchen Sie es erneut."
+                    _(
+                        "Zu viele Anfragen. Bitte warten Sie eine Minute und "
+                        "versuchen Sie es erneut."
+                    )
                 ),
                 "retry_after_seconds": RATE_LIMIT_RETRY_AFTER_SECONDS,
             }
@@ -174,9 +201,12 @@ def _tenant_name():
 
 def send_activity_notification(activity_type, details):
     name = _tenant_name()
-    subject = f"{name}: {activity_type}"
-    message_body = (
-        f"Neue Aktivität auf {name}:\n\nTyp: {activity_type}\n\nDetails:\n{details}"
+    subject = _("%(name)s: %(activity_type)s", name=name, activity_type=activity_type)
+    message_body = _(
+        "Neue Aktivität auf %(name)s:\n\nTyp: %(activity_type)s\n\nDetails:\n%(details)s",
+        name=name,
+        activity_type=activity_type,
+        details=details,
     )
     send_email(current_app.config["ADMIN_EMAIL"], subject, message_body)
 
@@ -187,15 +217,18 @@ def send_confirmation_email(email, verification_url, building_id=None, address=N
         city = getattr(g, "tenant", {}).get("city_name", "Zürich")
     except RuntimeError:
         city = "Zürich"
-    subject = f"{name}: Interessenmeldung bestätigen"
-    message_body = (
-        f"Bestätigen Sie Ihre Interessenmeldung für eine Lokale "
-        f"Elektrizitätsgemeinschaft (LEG) in {city}:\n\n"
-        f"{verification_url}\n\n"
+    subject = _("%(name)s: Interessenmeldung bestätigen", name=name)
+    message_body = _(
+        "Bestätigen Sie Ihre Interessenmeldung für eine Lokale "
+        "Elektrizitätsgemeinschaft (LEG) in %(city)s:\n\n"
+        "%(verification_url)s\n\n"
         "Erst danach wird Ihre Anmeldung anonym gezählt. Wir informieren Sie, "
         "wenn weitere bestätigte Interessierte aus derselben Gemeinde dazukommen.\n\n"
         "Falls Sie sich nicht angemeldet haben, ignorieren Sie diese E-Mail.\n\n"
-        f"Ihr {name}-Team"
+        "Ihr %(name)s-Team",
+        city=city,
+        verification_url=i18n.localized_url(verification_url),
+        name=name,
     )
     send_email(email, subject, message_body)
 
@@ -462,15 +495,15 @@ def api_check_potential():
     try:
         is_valid_size, size_error = security_utils.check_request_size(request)
         if not is_valid_size:
-            return jsonify({"error": size_error}), 413
+            return jsonify({"error": _(size_error)}), 413
         if not request.json:
-            return jsonify({"error": "Keine Daten empfangen."}), 400
+            return jsonify({"error": _("Keine Daten empfangen.")}), 400
         address = request.json.get("address", "").strip()
         is_valid, sanitized_address, error_msg = security_utils.validate_address(
             address
         )
         if not is_valid:
-            return jsonify({"error": error_msg}), 400
+            return jsonify({"error": _(error_msg)}), 400
         address = sanitized_address
 
         outcome = data_enricher.resolve_address_profile(address)
@@ -479,7 +512,7 @@ def api_check_potential():
             return (
                 jsonify(
                     {
-                        "error": "Adresse konnte nicht eindeutig geprüft werden.",
+                        "error": _("Adresse konnte nicht eindeutig geprüft werden."),
                         "can_register_interest": True,
                         "reason": outcome.live_status,
                     }
@@ -487,45 +520,58 @@ def api_check_potential():
                 422,
             )
         if not outcome.estimates:
-            return jsonify({"error": "Adresse konnte nicht analysiert werden."}), 404
+            return jsonify({"error": _("Adresse konnte nicht analysiert werden.")}), 404
 
         cluster_info = find_provisional_matches(outcome.estimates)
         if not cluster_info:
             return jsonify(
                 {
                     "potential": False,
-                    "message": "Keine direkten Partner gefunden.",
+                    "message": _("Keine direkten Partner gefunden."),
                     "profile_summary": outcome.estimates,
                 }
             )
         return jsonify(
             {
                 "potential": True,
-                "message": "Partner gefunden!",
+                "message": _("Partner gefunden!"),
                 "cluster_info": cluster_info,
                 "profile_summary": outcome.estimates,
             }
         )
     except Exception:
         current_app.logger.exception("Unhandled error in /api/check_potential")
-        return jsonify({"error": "Server-Fehler. Bitte später erneut versuchen."}), 500
+        return jsonify(
+            {"error": _("Server-Fehler. Bitte später erneut versuchen.")}
+        ), 500
 
 
 # --- Registration ---
 def _registration_response(user_type):
     if not request.json:
-        return jsonify({"error": "Keine Daten empfangen."}), 400
+        return jsonify({"error": _("Keine Daten empfangen.")}), 400
     is_valid_size, size_error = security_utils.check_request_size(request)
     if not is_valid_size:
-        return jsonify({"error": size_error}), 413
+        return jsonify({"error": _(size_error)}), 413
 
     city_id = g.tenant.get("territory", "zurich") if hasattr(g, "tenant") else "zurich"
+    application = current_app._get_current_object()
+    email_locale = i18n.select_locale()
+    email_tenant = dict(getattr(g, "tenant", {}))
+
+    def confirmation_in_request_language(*args):
+        # Threads have no Flask context. Capture presentation settings now,
+        # without copying authentication/session state into the worker.
+        with application.app_context(), force_locale(email_locale):
+            g.tenant = email_tenant
+            send_confirmation_email(*args)
+
     deps = registration.RegistrationDeps(
         db=db,
         security=security_utils,
         app_base_url=current_app.config["APP_BASE_URL"],
         thread=threading.Thread,
-        send_confirmation_email=send_confirmation_email,
+        send_confirmation_email=confirmation_in_request_language,
         find_provisional_matches=find_provisional_matches,
         collect_building_locations=collect_building_locations,
     )
@@ -534,7 +580,7 @@ def _registration_response(user_type):
             request.json, city_id=city_id, user_type=user_type, deps=deps
         )
     except registration.RegistrationError as error:
-        return jsonify({"error": error.message}), error.status
+        return jsonify({"error": _(error.message)}), error.status
     return jsonify(payload)
 
 
@@ -555,9 +601,9 @@ def api_register_full():
 def api_register_interest():
     is_valid_size, size_error = security_utils.check_request_size(request)
     if not is_valid_size:
-        return jsonify({"error": size_error}), 413
+        return jsonify({"error": _(size_error)}), 413
     if not request.json:
-        return jsonify({"error": "Keine Daten empfangen."}), 400
+        return jsonify({"error": _("Keine Daten empfangen.")}), 400
     try:
         result = interest_intake.submit(
             request.json,
@@ -567,8 +613,9 @@ def api_register_interest():
             send_email=send_email,
         )
     except interest_intake.InterestIntakeError as error:
-        return jsonify({"error": error.message}), 400
-    return jsonify(result), 202
+        return jsonify({"error": _(error.message)}), 400
+    message = result["message"]
+    return jsonify({**result, "message": _(message)}), 202
 
 
 @main_bp.route("/confirm/<token>")
@@ -623,16 +670,16 @@ def api_meter_data_upload():
         if tier not in (1, 2, 3):
             raise ValueError
     except (TypeError, ValueError):
-        return jsonify({"error": "tier muss 1, 2 oder 3 sein."}), 400
+        return jsonify({"error": _("tier muss 1, 2 oder 3 sein.")}), 400
 
     if not building_id or not csv_content:
-        return jsonify({"error": "building_id und csv_content erforderlich."}), 400
+        return jsonify({"error": _("building_id und csv_content erforderlich.")}), 400
 
     try:
         # Verify building exists
         building = db.get_building(building_id)
         if not building:
-            return jsonify({"error": "Gebäude nicht gefunden."}), 404
+            return jsonify({"error": _("Gebäude nicht gefunden.")}), 404
 
         # Save consent tier
         db.save_data_consent(
@@ -646,7 +693,9 @@ def api_meter_data_upload():
         return jsonify(meter_data.ingest_file(building_id, csv_content))
     except Exception:
         current_app.logger.exception("Unhandled error in /api/meter-data/upload")
-        return jsonify({"error": "Server-Fehler beim Verarbeiten der Messdaten."}), 500
+        return jsonify(
+            {"error": _("Server-Fehler beim Verarbeiten der Messdaten.")}
+        ), 500
 
 
 @main_bp.route("/meter-upload")
@@ -669,7 +718,7 @@ def unsubscribe_page():
         )
         if not is_valid_email:
             status = "error"
-            message = email_error
+            message = _(email_error)
         else:
             email_value = normalized_email
             matches = db.get_building_by_email(email_value)
@@ -682,15 +731,20 @@ def unsubscribe_page():
                     tokens.append(token)
             tokens.extend(db.create_coverage_deletion_tokens(email_value))
             for token in tokens:
-                unsubscribe_url = f"{current_app.config['APP_BASE_URL'].rstrip('/')}/unsubscribe/{token}"
+                unsubscribe_url = i18n.localized_url(
+                    f"{current_app.config['APP_BASE_URL'].rstrip('/')}/unsubscribe/{token}"
+                )
                 try:
                     send_email(
                         email_value,
-                        "OpenLEG: Löschung bestätigen",
-                        "Bestätigen Sie die Löschung Ihrer OpenLEG-Daten über "
-                        f"diesen Link:\n\n{unsubscribe_url}\n\n"
-                        "Der Link ist eine Stunde gültig. Falls Sie die Löschung "
-                        "nicht angefordert haben, ignorieren Sie diese E-Mail.",
+                        _("OpenLEG: Löschung bestätigen"),
+                        _(
+                            "Bestätigen Sie die Löschung Ihrer OpenLEG-Daten über "
+                            "diesen Link:\n\n%(unsubscribe_url)s\n\n"
+                            "Der Link ist eine Stunde gültig. Falls Sie die Löschung "
+                            "nicht angefordert haben, ignorieren Sie diese E-Mail.",
+                            unsubscribe_url=unsubscribe_url,
+                        ),
                     )
                 except Exception:
                     current_app.logger.exception(
@@ -698,7 +752,7 @@ def unsubscribe_page():
                     )
             email_value = ""
             status = "success"
-            message = (
+            message = _(
                 "Falls ein Eintrag vorhanden ist, erhalten Sie einen Bestätigungslink "
                 "per E-Mail."
             )
@@ -734,7 +788,7 @@ def unsubscribe_token(token):
             render_template(
                 "unsubscribe.html",
                 status="error",
-                message=(
+                message=_(
                     "Ihre Daten wurden nicht gelöscht. Der Link ist möglicherweise "
                     "abgelaufen. Fordern Sie einen neuen Bestätigungslink an."
                 ),
@@ -745,7 +799,7 @@ def unsubscribe_token(token):
     return render_template(
         "unsubscribe.html",
         status="success",
-        message="Ihre Daten wurden erfolgreich gelöscht.",
+        message=_("Ihre Daten wurden erfolgreich gelöscht."),
         email="",
     )
 
@@ -875,7 +929,7 @@ def api_formation_optimize():
     data = request.json or {}
     building_id = data.get("building_id", "").strip()
     if not building_id:
-        return jsonify({"error": "building_id required"}), 400
+        return jsonify({"error": _("building_id required")}), 400
 
     clusters = formation_wizard.get_formable_clusters(building_id)
     return jsonify({"clusters": clusters})
@@ -928,7 +982,7 @@ def api_billing_period(community_id, period_id):
     except db.BillingStoreError:
         abort(503)
     if not period:
-        return jsonify({"error": "Period not found"}), 404
+        return jsonify({"error": _("Period not found")}), 404
     return jsonify(period)
 
 
@@ -960,6 +1014,7 @@ def create_app(config=None, *, load_environment=True, check_database=True):
 
     application = Flask(__name__)
     application.config.from_mapping(app_config.build_config(os.environ, config))
+    i18n.init_app(application)
 
     public_site_base = app_config.validated_public_site_url(
         application.config["PUBLIC_SITE_URL"]
@@ -975,7 +1030,7 @@ def create_app(config=None, *, load_environment=True, check_database=True):
         parsed_path = urlparse(relative_path)
         if parsed_path.scheme or parsed_path.netloc:
             raise ValueError("public site link must be a relative path")
-        return urljoin(f"{public_site_base}/", relative_path)
+        return i18n.localized_url(urljoin(f"{public_site_base}/", relative_path))
 
     application.jinja_env.globals["public_site_url"] = public_site_url
     application.jinja_env.globals["matomo_site_id"] = matomo_site_id

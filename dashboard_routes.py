@@ -29,6 +29,8 @@ import dashboard as dashboard_module
 import database as db
 import payment_reconciliation
 import security_utils
+from i18n import gettext as _
+from i18n import localized_url, normalize_locale
 from store import contact_request
 
 
@@ -41,8 +43,16 @@ def _dashboard_csrf_token():
     return token if isinstance(token, str) else ""
 
 
-def _set_dashboard_session(building_id: str):
+def _clear_dashboard_session():
+    """Discard authentication state while retaining a validated UI language."""
+    locale = normalize_locale(session.get("locale"))
     session.clear()
+    if locale:
+        session["locale"] = locale
+
+
+def _set_dashboard_session(building_id: str):
+    _clear_dashboard_session()
     session.permanent = True
     session["dashboard_building_id"] = building_id
     session["dashboard_csrf_token"] = secrets.token_urlsafe(32)
@@ -131,10 +141,15 @@ def register_dashboard_routes(bp, *, send_email, limiter, render_city_template):
             try:
                 result = send_email(
                     recipient,
-                    "Ihre Kontaktanfragen bei OpenLEG",
-                    "Der Stand Ihrer Kontaktanfragen hat sich geändert. "
-                    "Öffnen Sie Ihr Dashboard, um die Anfrage zu prüfen.\n\n"
-                    f"{current_app.config['APP_BASE_URL'].rstrip('/')}/dashboard/contacts",
+                    _("Ihre Kontaktanfragen bei OpenLEG"),
+                    _(
+                        "Der Stand Ihrer Kontaktanfragen hat sich geändert. "
+                        "Öffnen Sie Ihr Dashboard, um die Anfrage zu prüfen.\n\n%(url)s",
+                        url=localized_url(
+                            current_app.config["APP_BASE_URL"].rstrip("/")
+                            + "/dashboard/contacts"
+                        ),
+                    ),
                     private=True,
                 )
                 failed = failed or result is False
@@ -248,7 +263,7 @@ def register_dashboard_routes(bp, *, send_email, limiter, render_city_template):
     @_rate_limit(limiter, "5 per minute")
     def dashboard_access_request():
         email = (request.form.get("email") or "").strip().lower()
-        generic_message = (
+        generic_message = _(
             "Falls ein Profil zu dieser E-Mail-Adresse existiert, haben wir einen "
             "neuen Zugangslink gesendet."
         )
@@ -284,11 +299,12 @@ def register_dashboard_routes(bp, *, send_email, limiter, render_city_template):
             try:
                 send_email(
                     normalized_email,
-                    "Ihr Dashboard-Zugangslink",
-                    "Öffnen Sie Ihr Dashboard über diesen Link:\n\n"
-                    f"{url}\n\n"
-                    "Falls Sie diesen Link nicht angefordert haben, können Sie diese "
-                    "E-Mail ignorieren.",
+                    _("Ihr Dashboard-Zugangslink"),
+                    _(
+                        "Öffnen Sie Ihr Dashboard über diesen Link:\n\n%(url)s\n\n"
+                        "Falls Sie diesen Link nicht angefordert haben, können Sie diese E-Mail ignorieren.",
+                        url=localized_url(url),
+                    ),
                 )
             except Exception:
                 current_app.logger.exception("Failed to send dashboard access email")
@@ -305,7 +321,7 @@ def register_dashboard_routes(bp, *, send_email, limiter, render_city_template):
         building_id = _require_dashboard_session()
         _require_dashboard_csrf()
         db.revoke_dashboard_access_tokens(building_id)
-        session.clear()
+        _clear_dashboard_session()
         return redirect("/dashboard")
 
     @bp.route("/dashboard/demo")

@@ -164,6 +164,7 @@ def build_config(env=None, overrides=None):
         "CRON_SECRET": env.get("CRON_SECRET", "").strip(),
         "RATELIMIT_STORAGE_URI": env.get("REDIS_URL", DEFAULT_REDIS_URL),
         "MATOMO_SITE_ID": env.get("MATOMO_SITE_ID", "").strip(),
+        "BABEL_DEFAULT_LOCALE": env.get("BABEL_DEFAULT_LOCALE", "de_CH"),
     }
 
     if overrides:

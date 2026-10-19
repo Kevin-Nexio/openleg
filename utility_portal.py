@@ -27,6 +27,8 @@ from flask import (
 import database as db
 import security_utils
 from email_utils import send_email
+from i18n import gettext as _
+from i18n import localized_url
 
 logger = logging.getLogger(__name__)
 
@@ -83,18 +85,18 @@ def register():
     kanton = (data.get("kanton") or "").strip().upper()[:2]
 
     if not company_name or not contact_email:
-        return jsonify({"error": "Firmenname und E-Mail sind erforderlich."}), 400
+        return jsonify({"error": _("Firmenname und E-Mail sind erforderlich.")}), 400
 
     is_valid, normalized, error = security_utils.validate_email_address(contact_email)
     if not is_valid:
-        return jsonify({"error": error}), 400
+        return jsonify({"error": _(error)}), 400
     contact_email = normalized
 
     # Check if already registered
     existing = db.get_utility_client_by_email(contact_email)
     if existing:
         return jsonify(
-            {"error": "Diese E-Mail ist bereits registriert. Bitte einloggen."}
+            {"error": _("Diese E-Mail ist bereits registriert. Bitte einloggen.")}
         ), 409
 
     if contact_phone:
@@ -127,8 +129,10 @@ def register():
     if not saved:
         return jsonify(
             {
-                "error": "Wir konnten die Registrierung nicht speichern. "
-                "Bitte versuchen Sie es später erneut."
+                "error": _(
+                    "Wir konnten die Registrierung nicht speichern. "
+                    "Bitte versuchen Sie es später erneut."
+                )
             }
         ), 503
 
@@ -145,7 +149,9 @@ def register():
         return jsonify(
             {
                 "success": True,
-                "message": "Registrierung erfolgreich. Login-Link per E-Mail gesendet.",
+                "message": _(
+                    "Registrierung erfolgreich. Login-Link per E-Mail gesendet."
+                ),
             }
         )
     return redirect(url_for("utility.login_page", registered=1))
@@ -171,7 +177,7 @@ def login_page():
             return redirect(url_for("utility.dashboard"))
         return render_template(
             "utility/login.html",
-            error="Ungültiger oder abgelaufener Login-Link.",
+            error=_("Ungültiger oder abgelaufener Login-Link."),
             site_url=_site_url(),
             tenant=getattr(g, "tenant", {}),
         )
@@ -191,7 +197,7 @@ def login_submit():
 
     is_valid, normalized, error = security_utils.validate_email_address(email)
     if not is_valid:
-        return jsonify({"error": error}), 400
+        return jsonify({"error": _(error)}), 400
 
     client = db.get_utility_client_by_email(normalized)
     if not client:
@@ -199,12 +205,14 @@ def login_submit():
         return jsonify(
             {
                 "success": True,
-                "message": "Falls registriert, erhalten Sie einen Login-Link per E-Mail.",
+                "message": _(
+                    "Falls registriert, erhalten Sie einen Login-Link per E-Mail."
+                ),
             }
         )
 
     _send_magic_link(client["client_id"], normalized)
-    return jsonify({"success": True, "message": "Login-Link per E-Mail gesendet."})
+    return jsonify({"success": True, "message": _("Login-Link per E-Mail gesendet.")})
 
 
 @utility_bp.route("/logout")
@@ -294,14 +302,16 @@ def _send_magic_link(client_id: str, email: str):
     token = secrets.token_urlsafe(48)
     db.set_utility_magic_token(client_id, token, MAGIC_LINK_TTL)
 
-    login_url = f"{_site_url()}/utility/login?token={token}"
-    subject = "OpenLEG: Ihr Login-Link"
-    body = (
-        f"Guten Tag,\n\n"
-        f"Klicken Sie auf den folgenden Link, um sich bei OpenLEG anzumelden:\n\n"
-        f"{login_url}\n\n"
-        f"Dieser Link ist {MAGIC_LINK_TTL // 60} Minuten gültig.\n\n"
-        f"Ihr OpenLEG-Team"
+    login_url = localized_url(f"{_site_url()}/utility/login?token={token}")
+    subject = _("OpenLEG: Ihr Login-Link")
+    body = _(
+        "Guten Tag,\n\n"
+        "Klicken Sie auf den folgenden Link, um sich bei OpenLEG anzumelden:\n\n"
+        "%(url)s\n\n"
+        "Dieser Link ist %(minutes)s Minuten gültig.\n\n"
+        "Ihr OpenLEG-Team",
+        url=login_url,
+        minutes=MAGIC_LINK_TTL // 60,
     )
     send_email(email, subject, body)
     logger.info(f"[UTILITY] Magic link sent to {email}")
