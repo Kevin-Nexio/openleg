@@ -502,7 +502,10 @@ def leg_financial_model():
 @public_api_bp.route("/leg/templates")
 def leg_templates():
     """Available LEG contract templates."""
+    from flask_babel import get_locale
+
     import formation_wizard
+    from i18n import gettext as _
 
     templates = formation_wizard.get_contract_templates()
     return jsonify(
@@ -510,8 +513,10 @@ def leg_templates():
             "contracts": [
                 {
                     "name": key,
-                    "description": val.get("title", ""),
-                    "language": val.get("language", "de"),
+                    "description": _(val.get("title", "")),
+                    "language": get_locale().language
+                    if get_locale()
+                    else val.get("language", "de"),
                     "sections": val.get("sections", []),
                 }
                 for key, val in templates.items()
