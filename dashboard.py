@@ -7,6 +7,7 @@ import math
 from datetime import date
 from decimal import Decimal, InvalidOperation
 from urllib.parse import quote, urlencode
+from zoneinfo import ZoneInfo
 
 import billing_lifecycle
 import billing_policy
@@ -21,11 +22,28 @@ import member_savings
 import payment_reconciliation
 import quartierakku
 import security_utils
+import telemetry
 import vnb_exchange
 from i18n import localized_url
 from translation_markers import gettext_noop as _N
 
 logger = logging.getLogger(__name__)
+
+
+def telemetry_view(installations):
+    """Present source timestamps in Swiss local time, preserving their UTC value."""
+    for installation in installations:
+        for sample in installation["samples"]:
+            observed = sample["observed_at"]
+            sample["observed_label"] = (
+                telemetry.timestamp(observed)
+                .astimezone(ZoneInfo("Europe/Zurich"))
+                .strftime("%d.%m.%Y %H:%M:%S %Z (%z)")
+                if observed
+                else None
+            )
+    return installations
+
 
 _PROFILE_EXPORT_FIELDS = (
     "building_id",
@@ -188,7 +206,7 @@ def leg_overview(community_id: str, building_id: str) -> dict:
     if not community_id or not building_id:
         return {"error": _N("Kein Zugriff."), "community": None}
 
-    status = formation_wizard.get_community_status(community_id)
+    status = formation_wizard.get_community_status(community_id, building_id)
     if not status:
         return {"error": _N("LEG nicht gefunden."), "community": None}
 
@@ -270,7 +288,7 @@ def leg_overview(community_id: str, building_id: str) -> dict:
 
 def _require_role(community_id: str, building_id: str, role: str):
     """Return the member row if building_id has the given role, else None."""
-    status = formation_wizard.get_community_status(community_id)
+    status = formation_wizard.get_community_status(community_id, building_id)
     if not status:
         return None
     return next(
@@ -322,7 +340,7 @@ def leg_restore_archive(
 
 def _require_capability(community_id: str, building_id: str, capability: str):
     """Return a confirmed member when the central access policy permits it."""
-    status = formation_wizard.get_community_status(community_id)
+    status = formation_wizard.get_community_status(community_id, building_id)
     if not status:
         return None
     member = next(
@@ -511,9 +529,9 @@ def leg_billing_workspace_view(
         "approval_error": None,
         "viewer_building_id": building_id,
         "require_dual_control": bool(
-            (formation_wizard.get_community_status(community_id) or {}).get(
-                "require_dual_control"
-            )
+            (
+                formation_wizard.get_community_status(community_id, building_id) or {}
+            ).get("require_dual_control")
         ),
         "can_prepare_billing": community_access.PREPARE_BILLING in capabilities,
         "can_approve_billing": community_access.APPROVE_BILLING in capabilities,
@@ -629,7 +647,7 @@ def leg_approve_billing_period(
         community_id, building_id, community_access.APPROVE_BILLING
     ):
         return {"error": _N("Kein Zugriff."), "invoices": []}
-    status = formation_wizard.get_community_status(community_id) or {}
+    status = formation_wizard.get_community_status(community_id, building_id) or {}
     if status.get("require_dual_control"):
         period = db.get_billing_period(period_id) or {}
         if not period.get("prepared_by") or period.get("prepared_by") == building_id:
@@ -765,7 +783,7 @@ def leg_save_battery(community_id: str, building_id: str, form) -> dict:
         community_id, building_id, community_access.PREPARE_BILLING
     ):
         return {"error": _N("Kein Zugriff."), "errors": {}}
-    status = formation_wizard.get_community_status(community_id)
+    status = formation_wizard.get_community_status(community_id, building_id)
     if not status:
         return {"error": _N("LEG nicht gefunden."), "errors": {}}
     member_ids = [
@@ -1182,7 +1200,7 @@ def leg_document_for_member(doc_id: int, building_id: str):
     doc = db.get_leg_document(doc_id)
     if not doc:
         return None
-    status = formation_wizard.get_community_status(doc["community_id"])
+    status = formation_wizard.get_community_status(doc["community_id"], building_id)
     if not status:
         return None
     is_member = any(m["building_id"] == building_id for m in status["members"] or [])
@@ -1201,7 +1219,7 @@ def leg_log_correspondence(
     attachment_data: bytes | None = None,
 ) -> dict:
     """Append a ledger entry; any confirmed or invited member may log."""
-    status = formation_wizard.get_community_status(community_id)
+    status = formation_wizard.get_community_status(community_id, building_id)
     if not status or not any(
         m["building_id"] == building_id for m in status["members"] or []
     ):
@@ -1236,7 +1254,7 @@ def leg_correspondence_attachment(
     entry_id: int, community_id: str, building_id: str
 ) -> dict | None:
     """Return a correspondence attachment only to a current LEG member."""
-    status = formation_wizard.get_community_status(community_id)
+    status = formation_wizard.get_community_status(community_id, building_id)
     if not status or not any(
         member["building_id"] == building_id for member in status["members"] or []
     ):

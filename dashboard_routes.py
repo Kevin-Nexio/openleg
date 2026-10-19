@@ -34,6 +34,7 @@ import security_utils
 from i18n import gettext as _
 from i18n import normalize_locale
 from store import contact_request
+from telemetry import TelemetryError
 
 
 def _dashboard_session_building_id():
@@ -204,6 +205,21 @@ def register_dashboard_routes(bp, *, send_email, limiter, render_city_template):
                 ),
             )
         return render_city_template("dashboard.html", **_dashboard_public_context())
+
+    @bp.get("/dashboard/telemetry")
+    def dashboard_telemetry():
+        actor = _require_dashboard_session()
+        try:
+            installations = dashboard_module.telemetry_view(
+                db.get_owner_telemetry_overview(actor)
+            )
+        except TelemetryError:
+            return render_city_template(
+                "telemetry_dashboard.html", unavailable=True
+            ), 503
+        return render_city_template(
+            "telemetry_dashboard.html", installations=installations
+        )
 
     @bp.route("/dashboard/profile", methods=["POST"])
     def dashboard_profile_update():
@@ -436,17 +452,29 @@ def register_dashboard_routes(bp, *, send_email, limiter, render_city_template):
             csrf_token="",
         )
 
-    @bp.route("/leg/community/create", methods=["POST"])
+    @bp.route("/leg/community/create", methods=["GET", "POST"])
     def leg_community_create():
-        name = request.form.get("name", "")
         building_id = _require_dashboard_session()
+        if request.method == "GET":
+            return render_city_template(
+                "leg_community_create.html",
+                csrf_token=_dashboard_csrf_token(),
+                error=None,
+                name="",
+                distribution_model="simple",
+            )
+        name = request.form.get("name", "")
         _require_dashboard_csrf()
         model = request.form.get("distribution_model", "simple")
         result = dashboard_module.leg_create(name, building_id, model)
         if result["error"]:
             return (
                 render_city_template(
-                    "leg_dashboard.html", error=result["error"], community=None
+                    "leg_community_create.html",
+                    error=result["error"],
+                    name=name,
+                    distribution_model=model,
+                    csrf_token=_dashboard_csrf_token(),
                 ),
                 400,
             )
