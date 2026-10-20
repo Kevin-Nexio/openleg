@@ -1301,6 +1301,15 @@ msgstr "Ausblick: zentrales LEG-Register"
 msgid "Ausgang"
 msgstr "Ausgang"
 
+#: templates/telemetry_shared.html:41
+#, python-format
+msgid ""
+"Ausgeschlossene Profile: %(overlap)s mit überlappenden Quellen, %(unavailable)s ohne aktuellen "
+"Messwert, %(estimated)s mit Schätzwerten, %(unsynchronized)s mit abweichenden Messzeiten."
+msgstr ""
+"Ausgeschlossene Profile: %(overlap)s mit überlappenden Quellen, %(unavailable)s ohne aktuellen "
+"Messwert, %(estimated)s mit Schätzwerten, %(unsynchronized)s mit abweichenden Messzeiten."
+
 #: templates/leg_kalkulator.html:90
 msgid "Ausgewählt:"
 msgstr "Ausgewählt:"
@@ -2729,6 +2738,14 @@ msgstr ""
 msgid "Die Ansicht zeigt höchstens die letzten 100 gespeicherten Abklärungen."
 msgstr "Die Ansicht zeigt höchstens die letzten 100 gespeicherten Abklärungen."
 
+#: templates/telemetry_shared.html:22
+msgid ""
+"Die Ansicht zeigt und zählt nur eigene und freigegebene Quellen. Sie umfasst keine weiteren "
+"Anlagen."
+msgstr ""
+"Die Ansicht zeigt und zählt nur eigene und freigegebene Quellen. Sie umfasst keine weiteren "
+"Anlagen."
+
 #: quartierakku.py:42
 msgid "Die Anteile enthalten unbekannte Teilnehmer."
 msgstr "Die Anteile enthalten unbekannte Teilnehmer."
@@ -2965,6 +2982,10 @@ msgstr ""
 "Prüfung erhalten Organisierende Zugang zur Verwaltung und können Ein- und Austritte online "
 "erfassen."
 
+#: templates/telemetry_dashboard.html:80
+msgid "Die Messquelle hat die Störungsmeldung zurückgenommen."
+msgstr "Die Messquelle hat die Störungsmeldung zurückgenommen."
+
 #: templates/telemetry_dashboard.html:77
 msgid "Die Messquelle liefert wieder aktuelle Werte."
 msgstr "Die Messquelle liefert wieder aktuelle Werte."
@@ -2972,6 +2993,14 @@ msgstr "Die Messquelle liefert wieder aktuelle Werte."
 #: member_savings.py:340
 msgid "Die Messwerte dieser Periode sind unvollständig."
 msgstr "Die Messwerte dieser Periode sind unvollständig."
+
+#: templates/telemetry_shared.html:29
+msgid ""
+"Die Mindestzahl macht freigegebene Einzelwerte nicht anonym. Die Ansicht trennt Quellen "
+"verschiedener Messkanäle."
+msgstr ""
+"Die Mindestzahl macht freigegebene Einzelwerte nicht anonym. Die Ansicht trennt Quellen "
+"verschiedener Messkanäle."
 
 #: templates/leg_dashboard.html:236
 msgid ""
@@ -3094,6 +3123,14 @@ msgstr "Die Solarnutzung beruht auf"
 #: templates/api_docs.html:245
 msgid "Die Suchanfrage muss mindestens 2 Zeichen enthalten."
 msgstr "Die Suchanfrage muss mindestens 2 Zeichen enthalten."
+
+#: templates/telemetry_shared.html:23
+msgid ""
+"Die Summen sind keine vollständige LEG-Bilanz. Für die Abrechnung gelten die validierten VNB-"
+"Messdaten."
+msgstr ""
+"Die Summen sind keine vollständige LEG-Bilanz. Für die Abrechnung gelten die validierten VNB-"
+"Messdaten."
 
 #: billing_policy.py:155
 msgid "Die Tarif-ID der Richtlinie ist ungültig."
@@ -3677,6 +3714,14 @@ msgstr ""
 "aus erneuerbaren Anlagen verbrauchen. Sie ist seit dem 1. Januar 2026 in der ganzen Schweiz "
 "möglich. Rechtsgrundlage: Art. 17d und 17e StromVG sowie Art. 19e bis 19h StromVV."
 
+#: templates/telemetry_shared.html:28
+msgid ""
+"Eine Summe erfordert mindestens drei Profile mit gemessenen, aktuellen Werten zur gleichen "
+"Messzeit. Die Summe schliesst Profile mit mehreren Quellen im gleichen Kanal aus."
+msgstr ""
+"Eine Summe erfordert mindestens drei Profile mit gemessenen, aktuellen Werten zur gleichen "
+"Messzeit. Die Summe schliesst Profile mit mehreren Quellen im gleichen Kanal aus."
+
 #: billing_lifecycle.py:47
 msgid "Eine Zahlungsreferenz ist erforderlich."
 msgstr "Eine Zahlungsreferenz ist erforderlich."
@@ -3829,6 +3874,10 @@ msgstr "Einwohner"
 #: templates/partials/install_console.html:9
 msgid "Einzeiler"
 msgstr "Einzeiler"
+
+#: templates/telemetry_shared.html:47
+msgid "Einzelne Quellen"
+msgstr "Einzelne Quellen"
 
 #: templates/leg_gruenden.html:218
 msgid "ElCom"
@@ -4310,6 +4359,10 @@ msgstr "Freigabe widerrufen"
 #: billing_lifecycle.py:15
 msgid "Freigegeben"
 msgstr "Freigegeben"
+
+#: templates/leg_dashboard.html:31 templates/telemetry_shared.html:3 templates/telemetry_shared.html:17
+msgid "Freigegebene Messwerte"
+msgstr "Freigegebene Messwerte"
 
 #: templates/leg_billing.html:100
 msgid "Freigegebene Rechnungen"
@@ -4821,6 +4874,14 @@ msgstr "Gerät"
 msgid "Gerät erfassen"
 msgstr "Gerät erfassen"
 
+#: templates/telemetry_dashboard.html:26
+msgid "Gerät meldet eine Störung"
+msgstr "Gerät meldet eine Störung"
+
+#: templates/telemetry_dashboard.html:79
+msgid "Gerät meldet keine Störung mehr"
+msgstr "Gerät meldet keine Störung mehr"
+
 #: templates/equipment_form.html:39
 msgid "Gerät und Leistung"
 msgstr "Gerät und Leistung"
@@ -4840,6 +4901,14 @@ msgstr "Geräteeintrag löschen"
 #: templates/equipment_error.html:5
 msgid "Geräteeintrag nicht verfügbar"
 msgstr "Geräteeintrag nicht verfügbar"
+
+#: templates/telemetry_dashboard.html:102
+msgid "Gerätemeldung"
+msgstr "Gerätemeldung"
+
+#: templates/telemetry_dashboard.html:14
+msgid "Gerätestatus"
+msgstr "Gerätestatus"
 
 #: templates/equipment_error.html:2
 msgid "Gerätezugang |"
@@ -6069,6 +6138,10 @@ msgstr "Keine Gutschriften."
 msgid "Keine LEGs gefunden"
 msgstr "Keine LEGs gefunden"
 
+#: templates/telemetry_shared.html:61
+msgid "Keine Leistungswerte im Aufbewahrungszeitraum verfügbar."
+msgstr "Keine Leistungswerte im Aufbewahrungszeitraum verfügbar."
+
 #: templates/pricing.html:10
 msgid "Keine Lizenzkosten, keine Anbieterbindung, kein Datenverkauf. So finanziert sich OpenLEG."
 msgstr "Keine Lizenzkosten, keine Anbieterbindung, kein Datenverkauf. So finanziert sich OpenLEG."
@@ -6101,6 +6174,14 @@ msgstr "Keine Snapshots"
 msgid "Keine Solardaten gefunden."
 msgstr "Keine Solardaten gefunden."
 
+#: templates/telemetry_shared.html:36
+msgid "Keine Summe: Die Messzeiten unterscheiden sich."
+msgstr "Keine Summe: Die Messzeiten unterscheiden sich."
+
+#: templates/telemetry_shared.html:38
+msgid "Keine Summe: Weniger als drei Profile liefern geeignete Werte."
+msgstr "Keine Summe: Weniger als drei Profile liefern geeignete Werte."
+
 #: templates/leg_kalkulator.html:425
 msgid "Keine Tarifdaten für diese Gemeinde verfügbar."
 msgstr "Keine Tarifdaten für diese Gemeinde verfügbar."
@@ -6124,6 +6205,10 @@ msgstr "Keine direkten Partner gefunden."
 #: templates/index.html:416
 msgid "Keine eindeutige Adresse gefunden. Sie können Ihr Interesse trotzdem für Ihre Gemeinde anmelden."
 msgstr "Keine eindeutige Adresse gefunden. Sie können Ihr Interesse trotzdem für Ihre Gemeinde anmelden."
+
+#: templates/telemetry_shared.html:46
+msgid "Keine freigegebenen Leistungswerte verfügbar."
+msgstr "Keine freigegebenen Leistungswerte verfügbar."
 
 #: advisories.py:22
 msgid "Keine genaue Gerätezuordnung"
@@ -6675,6 +6760,14 @@ msgstr "Leistung Ihrer Anlage in kWp"
 msgid "Lesen Sie den Code, nutzen Sie die API oder betreiben Sie OpenLEG selbst."
 msgstr "Lesen Sie den Code, nutzen Sie die API oder betreiben Sie OpenLEG selbst."
 
+#: templates/telemetry_dashboard.html:96
+msgid "Letzte Gerätemeldung: Störung"
+msgstr "Letzte Gerätemeldung: Störung"
+
+#: templates/telemetry_dashboard.html:96
+msgid "Letzte Gerätemeldung: keine Störung"
+msgstr "Letzte Gerätemeldung: keine Störung"
+
 #: advisories.py:56
 msgid "Letzte Quellenprüfung fehlgeschlagen"
 msgstr "Letzte Quellenprüfung fehlgeschlagen"
@@ -7073,6 +7166,10 @@ msgstr "Messzeit"
 #: templates/telemetry_dashboard.html:57
 msgid "Messzeit unbekannt"
 msgstr "Messzeit unbekannt"
+
+#: templates/telemetry_shared.html:43
+msgid "Messzeiten der geeigneten Werte"
+msgstr "Messzeiten der geeigneten Werte"
 
 #: i18n.py:69
 msgid "Methode nicht erlaubt"
@@ -8630,6 +8727,10 @@ msgstr ""
 "Checkliste, Cloud-Prüfung und Ersatzstromangaben auf «Unbekannt». Prüfen und speichern Sie diese "
 "danach erneut. Es gibt keinen zusammengefassten Sicherheitswert."
 
+#: templates/telemetry_dashboard.html:35
+msgid "Prüfen Sie die Anzeige am Gerät und die Hinweise des Herstellers."
+msgstr "Prüfen Sie die Anzeige am Gerät und die Hinweise des Herstellers."
+
 #: formation_wizard.py:356
 msgid "Prüfen Sie die Gemeinschaftsvereinbarung."
 msgstr "Prüfen Sie die Gemeinschaftsvereinbarung."
@@ -9323,6 +9424,16 @@ msgstr "Sicherheitshinweise zu meinem Gerät |"
 msgid "Sicherheitshinweise |"
 msgstr "Sicherheitshinweise |"
 
+#: templates/telemetry_shared.html:24
+#, python-format
+msgid "Sichtbare Anlagen: %(count)s"
+msgstr "Sichtbare Anlagen: %(count)s"
+
+#: templates/telemetry_shared.html:40
+#, python-format
+msgid "Sichtbare Profile: %(visible)s. Geeignete Profile: %(eligible)s. In der Summe: %(included)s."
+msgstr "Sichtbare Profile: %(visible)s. Geeignete Profile: %(eligible)s. In der Summe: %(included)s."
+
 #: templates/fuer_gemeinden.html:50
 msgid ""
 "Sie behalten die fachliche Verantwortung. OpenLEG stellt die Infrastruktur bereit. Der "
@@ -9362,6 +9473,14 @@ msgstr ""
 #: templates/fuer_gemeinden.html:36
 msgid "Sie ordnen Ihre Gemeinde anhand öffentlicher Daten ein."
 msgstr "Sie ordnen Ihre Gemeinde anhand öffentlicher Daten ein."
+
+#: templates/telemetry_shared.html:21
+msgid ""
+"Sie sehen eigene Anlagen und ausdrücklich für Sie freigegebene Quellen mit aktiver "
+"Nachbarschaftsfreigabe."
+msgstr ""
+"Sie sehen eigene Anlagen und ausdrücklich für Sie freigegebene Quellen mit aktiver "
+"Nachbarschaftsfreigabe."
 
 #: templates/fuer_gemeinden.html:35
 msgid "Sie sehen, wie viele Interessierte sich gemeldet haben."
@@ -9665,6 +9784,10 @@ msgstr "Stand"
 msgid "Stand Ihrer Abklärung"
 msgstr "Stand Ihrer Abklärung"
 
+#: templates/telemetry_shared.html:25
+msgid "Stand beim Laden"
+msgstr "Stand beim Laden"
+
 #: templates/equipment_form.html:75
 msgid "Stand der manuellen Prüfung"
 msgstr "Stand der manuellen Prüfung"
@@ -9854,6 +9977,10 @@ msgstr "Stufe 3:"
 msgid "Stundenmittel der globalen Sonneneinstrahlung am Prognosepunkt."
 msgstr "Stundenmittel der globalen Sonneneinstrahlung am Prognosepunkt."
 
+#: templates/telemetry_dashboard.html:16
+msgid "Störungsmeldung"
+msgstr "Störungsmeldung"
+
 #: templates/gemeinde/onboarding.html:112
 msgid "Suche aktuell nicht verfügbar."
 msgstr "Suche aktuell nicht verfügbar."
@@ -9865,6 +9992,10 @@ msgstr "Suchen"
 #: templates/admin/ops.html:197 templates/admin/ops.html:226
 msgid "Summary"
 msgstr "Zusammenfassung"
+
+#: templates/telemetry_shared.html:27
+msgid "Summen nach Messkanal"
+msgstr "Summen nach Messkanal"
 
 #: templates/utility/dashboard.html:13
 msgid "Suspended"
