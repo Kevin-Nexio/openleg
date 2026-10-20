@@ -70,6 +70,12 @@ def test_private_redirect_is_also_protected(web, monkeypatch):
         lambda token: {"client_id": "synthetic-client", "status": "active"},
     )
     monkeypatch.setattr(database, "clear_utility_magic_token", lambda client_id: None)
+    monkeypatch.setattr(
+        database,
+        "consume_utility_magic_token",
+        lambda token: {"client_id": "synthetic-client", "status": "active"},
+        raising=False,
+    )
     response = web.test_client().get("/utility/login?token=synthetic-token")
     assert response.status_code == 302
     assert response.headers["Cache-Control"] == "no-store"
