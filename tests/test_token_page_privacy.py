@@ -3,7 +3,10 @@
 
 import pytest
 
-from tests.test_i18n import app_module, isolated_environment  # noqa: F401
+from tests import test_i18n
+
+app_module = test_i18n.app_module
+isolated_environment = test_i18n.isolated_environment
 
 
 @pytest.fixture
