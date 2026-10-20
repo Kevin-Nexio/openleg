@@ -7,8 +7,10 @@ from threading import Barrier
 
 import pytest
 
+from tests import test_interest_postgres
 from tests.test_i18n import _synthetic_environment
-from tests.test_interest_postgres import interest_database  # noqa: F401
+
+interest_database = test_interest_postgres.interest_database
 
 pytestmark = pytest.mark.integration
 
@@ -113,3 +115,52 @@ def test_replaced_and_expired_links_cannot_clear_current_token(interest_database
     assert client.get("/utility/login?token=synthetic-expired").status_code == 200
     with client.session_transaction() as session:
         assert session["utility_client_id"] == "synthetic-grid"
+
+
+def test_concurrent_replacement_survives_an_older_waiting_request(
+    interest_database, monkeypatch
+):
+    import time
+    from threading import Event
+
+    db = interest_database
+    seed(db)
+    web = make_web()
+    entered = Event()
+    real_connection = db.get_connection
+    with real_connection() as blocker, blocker.cursor() as cur:
+        cur.execute(
+            "UPDATE utility_clients SET magic_link_token = %s WHERE client_id = %s",
+            ("synthetic-replacement", "synthetic-grid"),
+        )
+
+        @contextmanager
+        def worker_connection():
+            with real_connection() as conn:
+                entered.set()
+                yield conn
+
+        monkeypatch.setattr(db, "get_connection", worker_connection)
+        with ThreadPoolExecutor(max_workers=1) as executor:
+            future = executor.submit(
+                web.test_client().get, "/utility/login?token=synthetic-original"
+            )
+            assert entered.wait(timeout=10)
+            # Observe a real row-lock wait, not a sleep-based approximation.
+            deadline = time.monotonic() + 10
+            while True:
+                cur.execute(
+                    "SELECT count(*) AS count FROM pg_stat_activity WHERE datname = current_database() AND wait_event_type = 'Lock'"
+                )
+                if cur.fetchone()["count"]:
+                    break
+                assert time.monotonic() < deadline, (
+                    "the token request never reached PostgreSQL's row lock"
+                )
+                time.sleep(0.01)
+            blocker.commit()
+            assert future.result(timeout=10).status_code == 200
+    assert (
+        db.get_utility_client("synthetic-grid")["magic_link_token"]
+        == "synthetic-replacement"
+    )
