@@ -46,6 +46,9 @@ def test_sensitive_success_and_error_responses_are_private(
     monkeypatch.setattr(
         database, "get_utility_client_by_magic_token", lambda token: None
     )
+    monkeypatch.setattr(
+        database, "consume_utility_magic_token", lambda token: None, raising=False
+    )
     response = web.test_client().get(
         path + ("&" if "?" in path else "?") + "lang=" + lang
     )
