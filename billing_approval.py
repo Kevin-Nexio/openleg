@@ -809,6 +809,50 @@ def prepare_invoice_snapshots(period, issue_date=None):
             None,
         )
         participant_provenance = dict(provenance)
+        if reconciliation.get("source_evidence"):
+            source = reconciliation["source_evidence"]
+            metadata = source["metadata"]
+            participant_provenance["reconciliation"] = {
+                **provenance["reconciliation"],
+                "per_participant": {
+                    key: value
+                    for key, value in reconciliation["per_participant"].items()
+                    if key == participant_id
+                },
+                "production_per_participant": {
+                    key: value
+                    for key, value in reconciliation[
+                        "production_per_participant"
+                    ].items()
+                    if key == participant_id
+                },
+                "source_evidence": {
+                    **source,
+                    "metadata": {
+                        **{
+                            key: metadata[key]
+                            for key in (
+                                "document_status",
+                                "evidence_sha256",
+                                "sender_id",
+                                "receiver_id",
+                                "document_created_at",
+                                "vnb_community_id",
+                                "precision",
+                                "quality_policy",
+                                "channel_balance_policy",
+                                "products",
+                            )
+                            if key in metadata
+                        },
+                        "mappings": [
+                            mapping
+                            for mapping in metadata["mappings"]
+                            if mapping["building_id"] == participant_id
+                        ],
+                    },
+                },
+            }
         participant_provenance["rounding_adjustment"] = (
             {
                 "participant_id": participant_id,
