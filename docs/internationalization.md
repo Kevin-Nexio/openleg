@@ -147,3 +147,6 @@ links. Dynamic community, status and next-step text is escaped. It has no
 active sender or schedule; a future sender must choose the recipient's saved
 language for both subject and body.
 This implementation records no human language or legal approval.
+
+The [German / Swiss French glossary](glossary-de-fr.md) records display terminology
+and the contractual and banking terms that still require human validation.
