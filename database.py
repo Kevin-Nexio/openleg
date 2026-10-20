@@ -217,7 +217,10 @@ from store.correspondence import (  # noqa: F401
     list_correspondence,
     log_correspondence,
 )
-from store.dashboard_profile import update_dashboard_profile  # noqa: F401
+from store.dashboard_profile import (  # noqa: F401
+    update_dashboard_profile,
+    update_recipient_locale,
+)
 from store.document import (  # noqa: F401
     get_leg_document,
     list_leg_documents,
@@ -261,6 +264,7 @@ from store.interest import (  # noqa: F401
     get_municipality_interest_summary,
     get_operator_interest_counts,
     get_operator_interest_records,
+    get_verified_interest_recipient_preferences,
     get_verified_interest_recipients,
     save_coverage_request,
     verify_coverage_request,
@@ -369,6 +373,7 @@ from store.token import (  # noqa: F401
     confirm_profile_deletion,
     create_coverage_deletion_tokens,
     delete_tokens_for_building,
+    get_deletion_recipient_locale,
     get_token,
     save_token,
     use_token,

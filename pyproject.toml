@@ -100,6 +100,7 @@ also_copy = [
     "document_generator.py",
     "e66_evidence.py",
     "email_automation.py",
+    "email_localization.py",
     "email_utils.py",
     "equipment.py",
     "equipment_routes.py",

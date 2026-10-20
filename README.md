@@ -72,6 +72,17 @@ The path from raw metering data to a member invoice runs as one workflow in this
 4. **Lifecycle and delivery.** An issued invoice moves through `issued`, `delivered`, `paid`, `cancelled`, and `corrected` (`billing_lifecycle.py`). Members read their own invoices at `/dashboard/invoices`, `/dashboard/invoices/<invoice_id>`, and `/dashboard/invoices/<invoice_id>/pdf` (`member_invoices.py`, `templates/member_invoices.html`, `templates/member_invoice_detail.html`).
 
 Invoice approval stays a deliberate operator action. VNB-specific transport and credentials require local configuration.
+Formation documents and invoice PDFs support German and Swiss French labels;
+stored invoice figures and existing formation files remain unchanged. See
+[document language behavior](docs/internationalization.md#printable-documents).
+Residents can save German or Swiss French for the four scheduled onboarding
+emails and municipality interest notices in their private dashboard. Unresolved
+address confirmations use the language chosen at signup. Resident confirmation
+and login links, plus issued invoice notices and deletion confirmations, use the
+addressed record's saved choice.
+Existing registrations default to German;
+changing the page language alone does not change a saved preference. See
+[recipient language](docs/internationalization.md#recipient-language).
 
 Complete E66 LEG deliveries can also enter the calculated-values evidence path
 directly. An administrator records explicit meter-assignment validity, then
@@ -141,8 +152,7 @@ Public data fetchers live in `public_data.py`. Database persistence uses `databa
 German and Swiss French are available through the language selector. To default
 a self-hosted instance to French, set `BABEL_DEFAULT_LOCALE=fr_CH`. See the
 [internationalization guide](docs/internationalization.md) for translation coverage,
-catalog maintenance and adding further languages. Recipient communications are
-introduced in a separate contribution.
+catalog maintenance and adding further languages.
 
 New to the codebase? Follow the [contributor onboarding guide](docs/contributor-onboarding.md).
 
@@ -250,6 +260,18 @@ Freigabe. Mitglieder können zu ihrer eigenen Rechnung eine private Frage mit
 PDF-Beleg eröffnen und den Status im Rechnungsdetail verfolgen.
 
 Die Rechnungsfreigabe bleibt eine bewusste Entscheidung der Betreiberin. VNB-spezifischer Transport und Zugangsdaten müssen lokal eingerichtet werden.
+Gründungsdokumente und Rechnungs-PDFs unterstützen deutsche und französische
+Beschriftungen. Gespeicherte Rechnungsbeträge und vorhandene Gründungsdateien
+bleiben erhalten. Die [Sprachdokumentation](docs/internationalization.md#printable-documents)
+beschreibt das Verhalten.
+Bewohnerinnen und Bewohner können im privaten Dashboard Deutsch oder Französisch
+für die vier zeitversetzten Einstiegs-E-Mails und Gemeinde-Interessenmeldungen
+speichern. Bestätigungen bei ungeklärten Adressen verwenden die Sprache der
+Anmeldung. Bestätigungsmails und Zugangslinks zum Bewohnerdashboard verwenden
+die gespeicherte Sprache, ebenso die Benachrichtigung über eine freigegebene
+Rechnung und die Löschbestätigung für den jeweiligen Eintrag. Bestehende Anmeldungen
+behalten Deutsch. Ein Sprachwechsel auf der Seite ändert diese Einstellung nicht.
+Siehe [E-Mail-Sprache](docs/internationalization.md#recipient-language).
 
 ### Schnellstart
 
