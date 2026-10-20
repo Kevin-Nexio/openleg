@@ -5432,7 +5432,7 @@ msgstr "J’ai pris connaissance de ce message"
 
 #: templates/telemetry_dashboard.html:71
 msgid "Hinweis bestätigt"
-msgstr "Message confirmé"
+msgstr "Message pris en compte"
 
 #: templates/advisories_error.html:5
 msgid "Hinweis nicht verfügbar"

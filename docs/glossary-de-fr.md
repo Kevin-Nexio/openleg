@@ -22,6 +22,7 @@ French uses the `fr_CH` catalog; German remains the default (`de_CH`).
 | Zahlungsfrist | délai de paiement | Use gettext plurals: 1 jour, 2 jours; 1 Tag, 2 Tage. |
 | Messwert | valeur de mesure | Operational telemetry does not replace validated GRD billing data. |
 | Hinweis bestätigen | J’ai pris connaissance de ce message | Acknowledgment does not establish that a device fault is resolved. |
+| Hinweis bestätigt | Message pris en compte | The notice was acknowledged; its underlying measurement state remains visible. |
 
 ## Human validation still required
 
